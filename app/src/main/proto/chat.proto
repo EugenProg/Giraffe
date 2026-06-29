@@ -1,0 +1,62 @@
+syntax = "proto3";
+
+package chat;
+
+option java_package = "com.kogen.testgrpc.proto";
+option java_multiple_files = true;
+
+// Сообщение в чате
+message ChatMessage {
+  string id = 1;
+  string room_id = 2;
+  string sender = 3;
+  oneof content {
+    string text = 4;
+    string json_object = 5;
+    string json_array = 6;
+    bytes raw_bytes = 7;
+  }
+  string content_type = 8; // TEXT, JSON_OBJECT, JSON_ARRAY, IMAGE, PDF, AUDIO, UNKNOWN
+  int64 timestamp = 9;
+}
+
+// Запрос на подключение к комнате
+message RoomRequest {
+  string room_id = 1;
+  string client_id = 2;
+}
+
+// Команда от клиента
+message ClientCommand {
+  string room_id = 1;
+  string client_id = 2;
+  CommandType type = 3;
+  string payload = 4;
+}
+
+enum CommandType {
+  JOIN = 0;
+  LEAVE = 1;
+  PING = 2;
+  MESSAGE = 3;
+}
+
+// Ответ сервера на команду
+message ServerResponse {
+  string room_id = 1;
+  ResponseStatus status = 2;
+  string message = 3;
+}
+
+enum ResponseStatus {
+  OK = 0;
+  ERROR = 1;
+  DISCONNECTED = 2;
+}
+
+service ChatService {
+  // Двунаправленный стрим - основной чат
+  rpc Chat(stream ClientCommand) returns (stream ChatMessage);
+  // Подписка на комнату - только получение
+  rpc Subscribe(RoomRequest) returns (stream ChatMessage);
+}
