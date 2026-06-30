@@ -2,7 +2,34 @@
   "permissions": {
     "allow": [
       "Bash(./gradlew :app:generateProto)",
-      "Bash(./gradlew :app:generateDebugProto)"
+      "Bash(./gradlew :app:generateDebugProto)",
+      "WebSearch",
+      "Bash(curl -s \"https://search.maven.org/solrsearch/select?q=kogen+di&rows=10&wt=json\")",
+      "Bash(python3 -c \"import sys,json; data=json.load\\(sys.stdin\\); [print\\(d.get\\('id',''\\), d.get\\('latestVersion',''\\)\\) for d in data.get\\('response',{}\\).get\\('docs',[]\\)]\")",
+      "Bash(curl -s \"https://search.maven.org/solrsearch/select?q=g:io.github.eugenprog+AND+a:android-di&rows=5&wt=json\")",
+      "Bash(python3 -c ' *)",
+      "Bash(curl -s \"https://repo1.maven.org/maven2/io/github/eugenprog/android-di/1.0.7/android-di-1.0.7.pom\")",
+      "Bash(curl -s \"https://repo1.maven.org/maven2/io/github/eugenprog/\")",
+      "Bash(curl -s \"https://repo1.maven.org/maven2/io/github/eugenprog/android-di/maven-metadata.xml\")",
+      "Bash(curl -s \"https://repo1.maven.org/maven2/io/github/eugenprog/android-di/1.0.7/android-di-1.0.7.module\")",
+      "Bash(curl -s \"https://repo1.maven.org/maven2/io/github/eugenprog/android-di/1.0.7/\")",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:central.sonatype.com)",
+      "Bash(curl -s -o android-di-sources.jar \"https://repo1.maven.org/maven2/io/github/eugenprog/android-di/1.0.7/android-di-1.0.7-sources.jar\")",
+      "Bash(jar tf *)",
+      "Bash(curl -s -o \"/private/tmp/claude-502/-Users-viktor-AndroidStudioProjects-Graffe/371a16dd-2548-424e-b615-b76bd1f81331/scratchpad/android-di-sources.jar\" \"https://repo1.maven.org/maven2/io/github/eugenprog/android-di/1.0.7/android-di-1.0.7-sources.jar\")",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:mvnrepository.com)",
+      "Bash(curl -s \"https://central.sonatype.com/api/v1/search?namespace=io.github.eugenprog\")",
+      "Bash(curl -s \"https://repo1.maven.org/maven2/com/google/devtools/ksp/com.google.devtools.ksp.gradle.plugin/maven-metadata.xml\")",
+      "Bash(curl -s \"https://api.github.com/repos/EugenProg/KoGen-DI/contents\")",
+      "Bash(curl -s \"https://api.github.com/repos/EugenProg/KoGen-DI_demo/readme\" -H \"Accept: application/vnd.github.v3.raw\")",
+      "Bash(curl -s \"https://api.github.com/repos/EugenProg/KoGen-DI_demo/contents\")",
+      "Bash(curl -s \"https://repo1.maven.org/maven2/io/github/eugenprog/android-di/\")",
+      "Bash(./gradlew :app:kspDebugKotlin)",
+      "Bash(unzip *)",
+      "Bash(./gradlew :app:assembleDebug)",
+      "Bash(./gradlew clean *)"
     ]
   }
 }

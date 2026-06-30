@@ -24,4 +24,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "Graffe"
 include(":app")
-include(":graffe")
+include(":giraffe")

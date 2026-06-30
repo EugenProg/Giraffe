@@ -3,11 +3,11 @@ plugins {
 }
 
 android {
-    namespace = "com.kogen.graffe"
+    namespace = "com.kogen.giraffe"
     compileSdk = 37
 
     defaultConfig {
-        applicationId = "com.kogen.graffe"
+        applicationId = "com.kogen.giraffe"
         minSdk = 28
         versionCode = 1
         versionName = "1.0"
