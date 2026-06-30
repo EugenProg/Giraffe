@@ -1,5 +1,6 @@
 plugins {
     alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
     alias(libs.plugins.protobuf)
 }
@@ -28,6 +29,9 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+    buildFeatures {
+        compose = true
+    }
     sourceSets {
         getByName("debug") {
             java.directories.add("build/generated/ksp/debug/kotlin")
@@ -39,24 +43,37 @@ android {
 }
 
 dependencies {
+    implementation(project(":giraffe"))
     implementation(libs.androidx.appcompat)
-    implementation(libs.androidx.constraintlayout)
     implementation(libs.androidx.core.ktx)
-    implementation(libs.material)
+    implementation(libs.androidx.runtime)
+    implementation(libs.coroutines)
+    implementation(libs.kogen.di)
+    ksp(libs.kogen.di)
+
+    // gRPC
     implementation(libs.grpc.stub)
     implementation(libs.grpc.protobuf)
     implementation(libs.grpc.android)
     implementation(libs.grpc.okhttp)
     implementation(libs.grpc.kotlin.stub)
     implementation(libs.protobuf)
-    implementation(libs.coroutines)
-    implementation(libs.kogen.di)
-    ksp(libs.kogen.di)
+
+    // Compose
+    val composeBom = platform(libs.compose.bom)
+    implementation(composeBom)
+    implementation(libs.compose.ui)
+    implementation(libs.compose.ui.tooling.preview)
+    implementation(libs.compose.material3)
+    implementation(libs.activity.compose)
+    implementation(libs.lifecycle.viewmodel)
+    implementation(libs.lifecycle.viewmodel.compose)
+    debugImplementation(libs.compose.ui.tooling)
 }
 
 ksp {
     arg("packageName", "com.kogen.giraffeapp")
-    arg("includeViewModelInjector", "false")
+    arg("includeViewModelInjector", "true")
 }
 
 protobuf {
