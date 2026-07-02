@@ -1,6 +1,8 @@
 package com.kogen.giraffe
 
-import android.util.Log
+import android.content.Context
+import com.kogen.giraffe.di.inject
+import com.kogen.giraffe.di.setApplicationContext
 import io.grpc.CallOptions
 import io.grpc.Channel
 import io.grpc.ClientCall
@@ -10,35 +12,45 @@ import io.grpc.ForwardingClientCallListener
 import io.grpc.Metadata
 import io.grpc.MethodDescriptor
 import io.grpc.Status
+import java.util.UUID
 
-class GiraffeInterceptor : ClientInterceptor {
+class GiraffeInterceptor(val context: Context) : ClientInterceptor {
+
+    init {
+        setApplicationContext(context)
+    }
+
+    val notificationService = inject<GiraffeNotificationService>()
 
     override fun <ReqT, RespT> interceptCall(
         method: MethodDescriptor<ReqT, RespT>,
         callOptions: CallOptions,
         next: Channel,
     ): ClientCall<ReqT, RespT> {
-        val methodName = method.fullMethodName
+
+        val notificationId = UUID.randomUUID().hashCode()
+        val methodShortName = method.fullMethodName.substringAfterLast("/")
+        val host = next.authority()
 
         return object : ForwardingClientCall.SimpleForwardingClientCall<ReqT, RespT>(
             next.newCall(method, callOptions)
         ) {
             override fun start(responseListener: Listener<RespT>, headers: Metadata) {
-                Log.d(TAG, "→ CALL  $methodName")
-                Log.d(TAG, "→ HEADERS ${headers}")
                 super.start(
-                    object : ForwardingClientCallListener.SimpleForwardingClientCallListener<RespT>(responseListener) {
+                    object : ForwardingClientCallListener.SimpleForwardingClientCallListener<RespT>(
+                        responseListener
+                    ) {
                         override fun onMessage(message: RespT) {
-                            Log.d(TAG, "← MSG   $methodName | $message")
+                            sendNotification(
+                                method = methodShortName,
+                                host = host,
+                                message = message.toString(),
+                                notificationId = notificationId,
+                            )
                             super.onMessage(message)
                         }
 
                         override fun onClose(status: Status, trailers: Metadata) {
-                            if (status.isOk) {
-                                Log.d(TAG, "← CLOSE $methodName | OK")
-                            } else {
-                                Log.w(TAG, "← CLOSE $methodName | ${status.code} ${status.description}")
-                            }
                             super.onClose(status, trailers)
                         }
                     },
@@ -47,13 +59,24 @@ class GiraffeInterceptor : ClientInterceptor {
             }
 
             override fun sendMessage(message: ReqT) {
-                Log.d(TAG, "→ MSG   $methodName | $message")
+                sendNotification(
+                    method = methodShortName,
+                    host = host,
+                    message = message.toString(),
+                    notificationId = notificationId,
+                )
                 super.sendMessage(message)
             }
         }
+
     }
 
-    companion object {
-        const val TAG = "Giraffe"
+    fun sendNotification(method: String, host: String, message: String, notificationId: Int) {
+        notificationService.sendTrafficNotification(
+            methodName = method,
+            host = host,
+            message = message,
+            notificationId = notificationId,
+        )
     }
 }

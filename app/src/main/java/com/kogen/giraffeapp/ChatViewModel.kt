@@ -13,7 +13,7 @@ import kotlinx.coroutines.launch
 import kz.evko.kogen_di.annotations.KoGenViewModel
 
 data class ChatUiState(
-    val serverHost: String = "",
+    val serverHost: String = "192.168.1.102",
     val serverPort: String = "9090",
     val roomId: String = "room1",
     val clientId: String = "android-client-1",

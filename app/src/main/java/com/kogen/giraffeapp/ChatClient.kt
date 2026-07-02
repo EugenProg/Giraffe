@@ -28,7 +28,7 @@ class ChatClient(private val context: Context) {
             .forAddress(host, port)
             .context(context)
             .usePlaintext()
-            .intercept(GiraffeInterceptor())
+            .intercept(GiraffeInterceptor(context))
             .build()
         channel?.let {
             stub = ChatServiceGrpcKt.ChatServiceCoroutineStub(it)
