@@ -38,8 +38,11 @@ dependencies {
     implementation(libs.grpc.stub)
     implementation(libs.kogen.di)
     ksp(libs.kogen.di)
+    implementation(libs.room.runtime)
+    ksp(libs.room.compiler)
 }
 
 ksp {
     arg("packageName", "com.kogen.giraffe")
+    arg("room.schemaLocation", "$projectDir/schemas")
 }

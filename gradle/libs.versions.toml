@@ -13,11 +13,12 @@ coroutines = "1.11.0"
 ksp = "2.1.21-2.0.2"
 kogenDi = "1.0.4"
 constraintLayout = "2.2.1"
-composeBom = "2024.12.01"
-activityCompose = "1.9.3"
-lifecycleViewmodel = "2.8.7"
-runtime = "1.11.3"
+composeBom = "2026.06.01"
+activityCompose = "1.13.0"
+lifecycleViewmodel = "2.11.0"
+runtime = "1.11.4"
 core = "1.19.0"
+room = "2.7.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -42,6 +43,8 @@ lifecycle-viewmodel = { group = "androidx.lifecycle", name = "lifecycle-viewmode
 lifecycle-viewmodel-compose = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-compose", version.ref = "lifecycleViewmodel" }
 androidx-runtime = { group = "androidx.compose.runtime", name = "runtime", version.ref = "runtime" }
 androidx-core = { group = "androidx.core", name = "core", version.ref = "core" }
+room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
+room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
