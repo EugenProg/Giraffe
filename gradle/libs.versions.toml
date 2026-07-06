@@ -18,7 +18,7 @@ activityCompose = "1.13.0"
 lifecycleViewmodel = "2.11.0"
 runtime = "1.11.4"
 core = "1.19.0"
-room = "2.7.0"
+room = "2.8.4"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -30,6 +30,7 @@ grpc-android = { group = "io.grpc", name = "grpc-android", version.ref = "grpcAn
 grpc-okhttp = { group = "io.grpc", name = "grpc-okhttp", version.ref = "grpcAndroid" }
 grpc-kotlin-stub = { group = "io.grpc", name = "grpc-kotlin-stub", version.ref = "grpcKotlin" }
 protobuf = { group = "com.google.protobuf", name = "protobuf-kotlin-lite", version.ref = "protobuf" }
+protobuf-util = { group = "com.google.protobuf", name = "protobuf-java-util", version.ref = "protobuf" }
 coroutines = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }
 kogen-di = { group = "io.github.eugenprog", name = "android-di", version.ref = "kogenDi" }
 androidx-constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintLayout" }

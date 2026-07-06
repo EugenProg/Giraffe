@@ -1,10 +1,11 @@
 package com.kogen.giraffe
 
 import android.content.Context
+import android.util.Log
+import com.kogen.giraffe.analizer.GiraffeMessageAnalyzer
 import com.kogen.giraffe.db.dao.GiraffeLogDao
 import com.kogen.giraffe.db.entity.GiraffeChat
 import com.kogen.giraffe.db.entity.GiraffeChatStatus
-import com.kogen.giraffe.db.entity.GiraffeContentType
 import com.kogen.giraffe.db.entity.GiraffeHeader
 import com.kogen.giraffe.db.entity.GiraffeMessage
 import com.kogen.giraffe.di.inject
@@ -31,6 +32,7 @@ class GiraffeInterceptor(val context: Context) : ClientInterceptor {
 
     val notificationService = inject<GiraffeNotificationService>()
     val giraffeLogDao = inject<GiraffeLogDao>()
+    val analyzer = inject<GiraffeMessageAnalyzer>()
     private val scope = CoroutineScope(Dispatchers.Default)
 
     override fun <ReqT, RespT> interceptCall(
@@ -38,7 +40,6 @@ class GiraffeInterceptor(val context: Context) : ClientInterceptor {
         callOptions: CallOptions,
         next: Channel,
     ): ClientCall<ReqT, RespT> {
-
         val chatId = UUID.randomUUID()
         val methodShortName = method.fullMethodName.substringAfterLast("/")
         val host = next.authority()
@@ -81,18 +82,11 @@ class GiraffeInterceptor(val context: Context) : ClientInterceptor {
                                 message = message.toString(),
                                 notificationId = chatId,
                             )
-                            scope.launch {
-                                // TODO: Передать объект message в будущий анализатор для вычисления типа и сохранения
-                                val dbMessage = GiraffeMessage(
-                                    chatId = chatId.toString(),
-                                    isIncoming = true,
-                                    contentType = GiraffeContentType.Json,
-                                    textContent = message.toString(),
-                                    filePath = null,
-                                    timestamp = System.currentTimeMillis()
-                                )
-                                giraffeLogDao.insertMessage(dbMessage)
-                            }
+                            saveMessage(
+                                chatId = chatId.toString(),
+                                isIncoming = true,
+                                message = message as Any,
+                            )
                             super.onMessage(message)
                         }
 
@@ -133,25 +127,39 @@ class GiraffeInterceptor(val context: Context) : ClientInterceptor {
                     message = message.toString(),
                     notificationId = chatId,
                 )
-                scope.launch {
-                    // TODO: Передать объект message в будущий анализатор для вычисления типа и сохранения
-                    val dbMessage = GiraffeMessage(
-                        chatId = chatId.toString(),
-                        isIncoming = false,
-                        contentType = GiraffeContentType.Json,
-                        textContent = message.toString(),
-                        filePath = null,
-                        timestamp = System.currentTimeMillis()
-                    )
-                    giraffeLogDao.insertMessage(dbMessage)
-                }
+                saveMessage(
+                    chatId = chatId.toString(),
+                    isIncoming = false,
+                    message = message as Any,
+                )
                 super.sendMessage(message)
             }
         }
 
     }
 
-    fun sendNotification(method: String, host: String, message: String, notificationId: UUID) {
+    private fun saveMessage(chatId: String, isIncoming: Boolean, message: Any) {
+        scope.launch {
+            val analysis = analyzer.analyze(message)
+            Log.d(">>>", analysis.toString())
+            val dbMessage = GiraffeMessage(
+                chatId = chatId,
+                isIncoming = isIncoming,
+                contentType = analysis.contentType,
+                textContent = analysis.textContent,
+                filePath = analysis.filePath,
+                timestamp = System.currentTimeMillis(),
+            )
+            giraffeLogDao.insertMessage(dbMessage)
+        }
+    }
+
+    private fun sendNotification(
+        method: String,
+        host: String,
+        message: String,
+        notificationId: UUID
+    ) {
         notificationService.sendTrafficNotification(
             methodName = method,
             host = host,

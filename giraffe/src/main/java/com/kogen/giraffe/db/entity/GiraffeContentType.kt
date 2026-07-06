@@ -5,5 +5,6 @@ enum class GiraffeContentType {
     Json,
     Image,
     Audio,
+    Video,
     Unknown,
 }
