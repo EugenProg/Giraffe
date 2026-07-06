@@ -10,10 +10,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.kogen.giraffe.ui.common.main.BGSecondary
-import com.kogen.giraffe.ui.common.main.Error
-import com.kogen.giraffe.ui.common.main.Primary
-import com.kogen.giraffe.ui.common.main.TextPrimary
+import com.kogen.giraffe.ui.common.main.BGSecondaryColor
+import com.kogen.giraffe.ui.common.main.ErrorColor
+import com.kogen.giraffe.ui.common.main.PrimaryColor
+import com.kogen.giraffe.ui.common.main.TextPrimaryColor
 
 @Composable
 fun GiraffeButton(
@@ -51,7 +51,7 @@ data class GiraffeButtonData(
 )
 
 enum class GiraffeButtonStyle(val backgroundColor: Color, val textColor: Color) {
-    PrimaryType(Primary, TextPrimary),
-    SecondaryType(BGSecondary, TextPrimary),
-    NegativeType(Error, TextPrimary),
+    Primary(PrimaryColor, TextPrimaryColor),
+    Secondary(BGSecondaryColor, TextPrimaryColor),
+    Negative(ErrorColor, TextPrimaryColor),
 }

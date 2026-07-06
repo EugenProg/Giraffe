@@ -3,11 +3,14 @@ package com.kogen.giraffe.ui.features.chatList.presentation.screen
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import com.kogen.giraffe.di.koGenViewModel
+import com.kogen.giraffe.navigation.ActionToChatDetailsContainer
+import com.kogen.giraffe.navigation.navigateSafety
 import com.kogen.giraffe.ui.common.ScreenContainerWrapper
 import com.kogen.giraffe.ui.common.presentation.GiraffeAlert
 import com.kogen.giraffe.ui.common.presentation.GiraffeButtonData
 import com.kogen.giraffe.ui.common.presentation.GiraffeButtonStyle
 import com.kogen.giraffe.ui.features.chatList.presentation.mvi.ChatListAction
+import com.kogen.giraffe.ui.features.chatList.presentation.mvi.ChatListEffect
 import com.kogen.giraffe.ui.features.chatList.presentation.mvi.ChatListViewModel
 import kz.evko.navigation.annotation.KoGenScreen
 
@@ -18,6 +21,13 @@ fun ChatListContainer(
 ) {
     ScreenContainerWrapper(
         viewModel = koGenViewModel<ChatListViewModel>(),
+        onEffect = {
+            when (it) {
+                is ChatListEffect.NavigateToDetails -> {
+                    navController.navigateSafety(ActionToChatDetailsContainer(it.id))
+                }
+            }
+        },
         screenContent = { state, action ->
             if (state.showDeleteDialog) {
                 GiraffeAlert(
@@ -25,14 +35,14 @@ fun ChatListContainer(
                     description = "Это безвозвратно удалит все перехваченные gRPC-соединения и чаты из локальной базы данных",
                     confirmButton = GiraffeButtonData(
                         title = "Удалить",
-                        style = GiraffeButtonStyle.NegativeType,
+                        style = GiraffeButtonStyle.Negative,
                         onClick = {
                             action(ChatListAction.ClearHistory)
                         }
                     ),
                     cancelButton = GiraffeButtonData(
                         title = "Отмена",
-                        style = GiraffeButtonStyle.SecondaryType,
+                        style = GiraffeButtonStyle.Secondary,
                         onClick = {
                             action(ChatListAction.HideDeleteDialog)
                         }

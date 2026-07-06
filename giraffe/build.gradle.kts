@@ -57,6 +57,8 @@ dependencies {
     implementation(libs.lifecycle.viewmodel)
     implementation(libs.lifecycle.viewmodel.compose)
     debugImplementation(libs.compose.ui.tooling)
+    implementation(libs.coil.base)
+    implementation(libs.coil)
 }
 
 ksp {

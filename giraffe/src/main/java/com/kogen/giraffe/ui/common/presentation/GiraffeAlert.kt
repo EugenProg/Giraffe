@@ -23,8 +23,8 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.window.DialogWindowProvider
-import com.kogen.giraffe.ui.common.main.Background
-import com.kogen.giraffe.ui.common.main.TextPrimary
+import com.kogen.giraffe.ui.common.main.BackgroundColor
+import com.kogen.giraffe.ui.common.main.TextPrimaryColor
 
 @Composable
 fun GiraffeAlert(
@@ -60,7 +60,7 @@ fun GiraffeAlert(
                 )
                 .fillMaxWidth()
                 .background(
-                    color = Background,
+                    color = BackgroundColor,
                     shape = shape
                 )
                 .clip(shape)
@@ -74,7 +74,7 @@ fun GiraffeAlert(
                 style = TextStyle(
                     fontSize = 24.sp,
                 ),
-                color = TextPrimary,
+                color = TextPrimaryColor,
                 textAlign = TextAlign.Center,
             )
 
@@ -86,7 +86,7 @@ fun GiraffeAlert(
                     style = TextStyle(
                         fontSize = 16.sp,
                     ),
-                    color = TextPrimary,
+                    color = TextPrimaryColor,
                     textAlign = TextAlign.Center
                 )
             }

@@ -40,12 +40,12 @@ import com.kogen.giraffe.ui.common.domain.models.GiraffeChat
 import com.kogen.giraffe.ui.common.domain.models.GiraffeContentType
 import com.kogen.giraffe.ui.common.domain.models.color
 import com.kogen.giraffe.ui.common.domain.models.type
-import com.kogen.giraffe.ui.common.main.BGSecondary
-import com.kogen.giraffe.ui.common.main.Background
-import com.kogen.giraffe.ui.common.main.Error
-import com.kogen.giraffe.ui.common.main.Primary
-import com.kogen.giraffe.ui.common.main.TextPrimary
-import com.kogen.giraffe.ui.common.presentation.GiraffeAlert
+import com.kogen.giraffe.ui.common.main.BGSecondaryColor
+import com.kogen.giraffe.ui.common.main.BackgroundColor
+import com.kogen.giraffe.ui.common.main.ErrorColor
+import com.kogen.giraffe.ui.common.main.PrimaryColor
+import com.kogen.giraffe.ui.common.main.TextPrimaryColor
+import com.kogen.giraffe.ui.common.presentation.NoContentView
 import com.kogen.giraffe.ui.features.chatList.presentation.mvi.ChatListAction
 import com.kogen.giraffe.ui.features.chatList.presentation.mvi.ChatListState
 
@@ -55,7 +55,7 @@ internal fun ChatListScreen(
     action: (ChatListAction) -> Unit,
 ) {
     Scaffold(
-        containerColor = Background,
+        containerColor = BackgroundColor,
         topBar = {
             Column(
                 modifier = Modifier
@@ -76,7 +76,7 @@ internal fun ChatListScreen(
                         style = TextStyle(
                             fontSize = 24.sp,
                         ),
-                        color = Primary,
+                        color = PrimaryColor,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
@@ -91,7 +91,7 @@ internal fun ChatListScreen(
                             .padding(6.dp),
                         painter = painterResource(R.drawable.ic_trash),
                         contentDescription = null,
-                        tint = Primary,
+                        tint = PrimaryColor,
                     )
                     Icon(
                         modifier = Modifier
@@ -103,13 +103,13 @@ internal fun ChatListScreen(
                             .padding(6.dp),
                         painter = painterResource(R.drawable.ic_settings),
                         contentDescription = null,
-                        tint = Primary,
+                        tint = PrimaryColor,
                     )
                 }
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(Primary)
+                        .background(PrimaryColor)
                         .height(1.dp),
                 )
             }
@@ -130,32 +130,19 @@ internal fun ChatListScreen(
                     Box(
                         modifier = Modifier.animateItem()
                     ) {
-                        ChatListItem(chat) {
+                        ChatListItem(
+                            chat = chat,
+                            onClick = {
+                                action(ChatListAction.ShowChatDetails(chat.id))
+                            },
+                        ) {
                             action(ChatListAction.DeleteChat(chat.id))
                         }
                     }
                 }
             } else {
                 item {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp)
-                            .height(200.dp)
-                            .background(
-                                color = BGSecondary,
-                                shape = RoundedCornerShape(8.dp),
-                            ),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Text(
-                            "No content yet",
-                            style = TextStyle(
-                                fontSize = 16.sp,
-                            ),
-                            color = TextPrimary,
-                        )
-                    }
+                    NoContentView()
                 }
             }
         }
@@ -163,7 +150,7 @@ internal fun ChatListScreen(
 }
 
 @Composable
-private fun ChatListItem(chat: GiraffeChat, onDismiss: () -> Unit) {
+private fun ChatListItem(chat: GiraffeChat, onClick: () -> Unit, onDismiss: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -189,7 +176,8 @@ private fun ChatListItem(chat: GiraffeChat, onDismiss: () -> Unit) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(BGSecondary)
+                    .background(BGSecondaryColor)
+                    .clickable(onClick = onClick)
                     .padding(8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -202,7 +190,7 @@ private fun ChatListItem(chat: GiraffeChat, onDismiss: () -> Unit) {
                         style = TextStyle(
                             fontSize = 16.sp,
                         ),
-                        color = TextPrimary,
+                        color = TextPrimaryColor,
                     )
                     Spacer(Modifier.height(4.dp))
                     Text(
@@ -210,7 +198,7 @@ private fun ChatListItem(chat: GiraffeChat, onDismiss: () -> Unit) {
                         style = TextStyle(
                             fontSize = 14.sp,
                         ),
-                        color = TextPrimary,
+                        color = TextPrimaryColor,
                         maxLines = 3,
                         overflow = TextOverflow.Ellipsis,
                     )
@@ -219,7 +207,7 @@ private fun ChatListItem(chat: GiraffeChat, onDismiss: () -> Unit) {
                 Box(
                     modifier = Modifier
                         .background(
-                            color = Background,
+                            color = BackgroundColor,
                             shape = RoundedCornerShape(8.dp),
                         )
                         .size(36.dp),
@@ -256,7 +244,7 @@ private fun SwipeToDismissBoxView(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(
-                        color = Error,
+                        color = ErrorColor,
                         shape = RoundedCornerShape(
                             bottomStart = 4.dp,
                             bottomEnd = 4.dp

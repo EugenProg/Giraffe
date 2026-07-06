@@ -104,7 +104,7 @@ class GiraffeInterceptor(val context: Context) : ClientInterceptor {
                                 }
 
                                 val chatStatus =
-                                    if (status.isOk) GiraffeChatStatus.Ok
+                                    if (status.isOk || status.code == Status.Code.CANCELLED) GiraffeChatStatus.Ok
                                     else GiraffeChatStatus.Error
                                 giraffeLogDao.completeChat(
                                     chatId = chatId.toString(),
@@ -141,7 +141,6 @@ class GiraffeInterceptor(val context: Context) : ClientInterceptor {
     private fun saveMessage(chatId: String, isIncoming: Boolean, message: Any) {
         scope.launch {
             val analysis = analyzer.analyze(message)
-            Log.d(">>>", analysis.toString())
             val dbMessage = GiraffeMessageEntity(
                 chatId = chatId,
                 isIncoming = isIncoming,

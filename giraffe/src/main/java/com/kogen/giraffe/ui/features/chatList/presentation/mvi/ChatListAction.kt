@@ -7,4 +7,5 @@ sealed interface ChatListAction: UiAction {
     data class DeleteChat(val chatId: String): ChatListAction
     data object ShowDeleteDialog: ChatListAction
     data object HideDeleteDialog: ChatListAction
+    data class ShowChatDetails(val id: String): ChatListAction
 }

@@ -54,6 +54,10 @@ internal class ChatListViewModel(
                     it.copy(showDeleteDialog = false)
                 }
             }
+
+            is ChatListAction.ShowChatDetails -> {
+                emitEffect(ChatListEffect.NavigateToDetails(action.id))
+            }
         }
     }
 }
