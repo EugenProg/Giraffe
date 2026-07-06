@@ -164,7 +164,7 @@ class GiraffeInterceptor(val context: Context) : ClientInterceptor {
             methodName = method,
             host = host,
             message = message,
-            notificationId = notificationId.hashCode(),
+            notificationId = notificationId,
         )
     }
 }
