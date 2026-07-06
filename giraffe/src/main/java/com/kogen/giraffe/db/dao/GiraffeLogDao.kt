@@ -55,6 +55,12 @@ interface GiraffeLogDao {
 
     @Query("UPDATE giraffe_chat SET status = :finalStatus WHERE chatId = :chatId")
     suspend fun updateChatStatus(chatId: String, finalStatus: GiraffeChatStatus)
+
+    @Query("DELETE FROM giraffe_chat WHERE chatId = :chatId")
+    suspend fun deleteChatById(chatId: String)
+
+    @Query("DELETE FROM giraffe_chat")
+    suspend fun clearAllChats()
 }
 
 @KoGenBean(true)
