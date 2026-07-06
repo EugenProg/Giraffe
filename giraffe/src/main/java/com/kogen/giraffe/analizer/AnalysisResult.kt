@@ -1,6 +1,6 @@
 package com.kogen.giraffe.analizer
 
-import com.kogen.giraffe.db.entity.GiraffeContentType
+import com.kogen.giraffe.ui.common.domain.models.GiraffeContentType
 
 data class AnalysisResult(
     val contentType: GiraffeContentType,

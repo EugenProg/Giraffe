@@ -61,6 +61,7 @@ dependencies {
 
 ksp {
     arg("packageName", "com.kogen.giraffe")
+    arg("includeViewModelInjector", "true")
     arg("defaultAnimation", "slideLeft")
     arg("room.schemaLocation", "$projectDir/schemas")
 }

@@ -1,8 +1,8 @@
 package com.kogen.giraffe.db.converter
 
 import androidx.room.TypeConverter
-import com.kogen.giraffe.db.entity.GiraffeChatStatus
-import com.kogen.giraffe.db.entity.GiraffeContentType
+import com.kogen.giraffe.ui.common.domain.models.GiraffeChatStatus
+import com.kogen.giraffe.ui.common.domain.models.GiraffeContentType
 
 class GiraffeConverters {
     @TypeConverter

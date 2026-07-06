@@ -8,10 +8,10 @@ import androidx.room.Transaction
 import androidx.room.Update
 import com.kogen.giraffe.db.GiraffeDb
 import com.kogen.giraffe.db.entity.ChatWithDetails
-import com.kogen.giraffe.db.entity.GiraffeChat
-import com.kogen.giraffe.db.entity.GiraffeChatStatus
-import com.kogen.giraffe.db.entity.GiraffeHeader
-import com.kogen.giraffe.db.entity.GiraffeMessage
+import com.kogen.giraffe.db.entity.GiraffeChatEntity
+import com.kogen.giraffe.ui.common.domain.models.GiraffeChatStatus
+import com.kogen.giraffe.db.entity.GiraffeHeaderEntity
+import com.kogen.giraffe.db.entity.GiraffeMessageEntity
 import kotlinx.coroutines.flow.Flow
 import kz.evko.kogen_di.annotations.KoGenBean
 
@@ -26,19 +26,19 @@ interface GiraffeLogDao {
     fun getChatDetailsById(chatId: String): Flow<ChatWithDetails?>
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
-    suspend fun insertChat(chat: GiraffeChat)
+    suspend fun insertChat(chat: GiraffeChatEntity)
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
-    suspend fun insertHeaders(headers: List<GiraffeHeader>)
+    suspend fun insertHeaders(headers: List<GiraffeHeaderEntity>)
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
-    suspend fun insertMessage(message: GiraffeMessage)
+    suspend fun insertMessage(message: GiraffeMessageEntity)
 
     @Update
-    suspend fun updateChat(chat: GiraffeChat)
+    suspend fun updateChat(chat: GiraffeChatEntity)
 
     @Transaction
-    suspend fun startChat(chat: GiraffeChat, requestHeaders: List<GiraffeHeader>) {
+    suspend fun startChat(chat: GiraffeChatEntity, requestHeaders: List<GiraffeHeaderEntity>) {
         insertChat(chat)
         insertHeaders(requestHeaders)
     }
@@ -47,7 +47,7 @@ interface GiraffeLogDao {
     suspend fun completeChat(
         chatId: String,
         finalStatus: GiraffeChatStatus,
-        responseHeaders: List<GiraffeHeader>,
+        responseHeaders: List<GiraffeHeaderEntity>,
     ) {
         updateChatStatus(chatId, finalStatus)
         insertHeaders(responseHeaders)

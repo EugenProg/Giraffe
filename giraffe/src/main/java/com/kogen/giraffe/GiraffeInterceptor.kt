@@ -4,10 +4,10 @@ import android.content.Context
 import android.util.Log
 import com.kogen.giraffe.analizer.GiraffeMessageAnalyzer
 import com.kogen.giraffe.db.dao.GiraffeLogDao
-import com.kogen.giraffe.db.entity.GiraffeChat
-import com.kogen.giraffe.db.entity.GiraffeChatStatus
-import com.kogen.giraffe.db.entity.GiraffeHeader
-import com.kogen.giraffe.db.entity.GiraffeMessage
+import com.kogen.giraffe.db.entity.GiraffeChatEntity
+import com.kogen.giraffe.ui.common.domain.models.GiraffeChatStatus
+import com.kogen.giraffe.db.entity.GiraffeHeaderEntity
+import com.kogen.giraffe.db.entity.GiraffeMessageEntity
 import com.kogen.giraffe.di.inject
 import com.kogen.giraffe.di.setApplicationContext
 import io.grpc.CallOptions
@@ -50,7 +50,7 @@ class GiraffeInterceptor(val context: Context) : ClientInterceptor {
         ) {
             override fun start(responseListener: Listener<RespT>, headers: Metadata) {
                 scope.launch {
-                    val chat = GiraffeChat(
+                    val chat = GiraffeChatEntity(
                         chatId = chatId.toString(),
                         url = url,
                         methodShortName = methodShortName,
@@ -60,7 +60,7 @@ class GiraffeInterceptor(val context: Context) : ClientInterceptor {
 
                     val reqHeaders = headers.keys().map { keyName ->
                         val key = Metadata.Key.of(keyName, Metadata.ASCII_STRING_MARSHALLER)
-                        GiraffeHeader(
+                        GiraffeHeaderEntity(
                             chatId = chatId.toString(),
                             isResponse = false,
                             key = keyName,
@@ -95,7 +95,7 @@ class GiraffeInterceptor(val context: Context) : ClientInterceptor {
                                 val respHeaders = trailers.keys().map { keyName ->
                                     val key =
                                         Metadata.Key.of(keyName, Metadata.ASCII_STRING_MARSHALLER)
-                                    GiraffeHeader(
+                                    GiraffeHeaderEntity(
                                         chatId = chatId.toString(),
                                         isResponse = true,
                                         key = keyName,
@@ -142,7 +142,7 @@ class GiraffeInterceptor(val context: Context) : ClientInterceptor {
         scope.launch {
             val analysis = analyzer.analyze(message)
             Log.d(">>>", analysis.toString())
-            val dbMessage = GiraffeMessage(
+            val dbMessage = GiraffeMessageEntity(
                 chatId = chatId,
                 isIncoming = isIncoming,
                 contentType = analysis.contentType,

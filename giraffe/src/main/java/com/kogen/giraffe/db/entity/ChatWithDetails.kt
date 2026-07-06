@@ -4,11 +4,11 @@ import androidx.room.Embedded
 import androidx.room.Relation
 
 data class ChatWithDetails(
-    @Embedded val call: GiraffeChat,
+    @Embedded val chat: GiraffeChatEntity,
 
     @Relation(parentColumn = CHAT_ID, entityColumn = CHAT_ID)
-    val headers: List<GiraffeHeader>,
+    val headers: List<GiraffeHeaderEntity>,
 
     @Relation(parentColumn = CHAT_ID, entityColumn = CHAT_ID)
-    val messages: List<GiraffeMessage>,
+    val messages: List<GiraffeMessageEntity>,
 )

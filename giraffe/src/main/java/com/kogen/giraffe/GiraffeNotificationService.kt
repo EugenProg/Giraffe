@@ -7,7 +7,7 @@ import android.content.Context
 import android.content.Intent
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import com.kogen.giraffe.ui.GiraffeActivity
+import com.kogen.giraffe.ui.common.main.GiraffeActivity
 import kz.evko.kogen_di.annotations.KoGenComponent
 import java.util.UUID
 

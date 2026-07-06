@@ -4,7 +4,7 @@ import android.content.Context
 import com.kogen.giraffe.analizer.AnalysisResult
 import com.kogen.giraffe.analizer.utils.MediaSignatures
 import com.kogen.giraffe.analizer.utils.saveMediaToCache
-import com.kogen.giraffe.db.entity.GiraffeContentType
+import com.kogen.giraffe.ui.common.domain.models.GiraffeContentType
 
 internal class GiraffeUnknownBinaryParser : ContentParser {
     override fun parse(message: Any, context: Context): AnalysisResult? {

@@ -7,7 +7,7 @@ import com.kogen.giraffe.analizer.parsers.GiraffeImageParser
 import com.kogen.giraffe.analizer.parsers.GiraffeJsonParser
 import com.kogen.giraffe.analizer.parsers.GiraffeUnknownBinaryParser
 import com.kogen.giraffe.analizer.parsers.GiraffeVideoParser
-import com.kogen.giraffe.db.entity.GiraffeContentType
+import com.kogen.giraffe.ui.common.domain.models.GiraffeContentType
 import kz.evko.kogen_di.annotations.KoGenComponent
 import org.json.JSONArray
 import org.json.JSONObject

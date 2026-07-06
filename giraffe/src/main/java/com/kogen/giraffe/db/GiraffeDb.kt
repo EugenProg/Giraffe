@@ -7,16 +7,16 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.kogen.giraffe.db.converter.GiraffeConverters
 import com.kogen.giraffe.db.dao.GiraffeLogDao
-import com.kogen.giraffe.db.entity.GiraffeChat
-import com.kogen.giraffe.db.entity.GiraffeHeader
-import com.kogen.giraffe.db.entity.GiraffeMessage
+import com.kogen.giraffe.db.entity.GiraffeChatEntity
+import com.kogen.giraffe.db.entity.GiraffeHeaderEntity
+import com.kogen.giraffe.db.entity.GiraffeMessageEntity
 import kz.evko.kogen_di.annotations.KoGenBean
 
 @Database(
     entities = [
-        GiraffeChat::class,
-        GiraffeHeader::class,
-        GiraffeMessage::class,
+        GiraffeChatEntity::class,
+        GiraffeHeaderEntity::class,
+        GiraffeMessageEntity::class,
     ],
     version = 1,
     exportSchema = false,

@@ -2,7 +2,7 @@ package com.kogen.giraffe.analizer.parsers
 
 import android.content.Context
 import com.kogen.giraffe.analizer.AnalysisResult
-import com.kogen.giraffe.db.entity.GiraffeContentType
+import com.kogen.giraffe.ui.common.domain.models.GiraffeContentType
 import org.json.JSONArray
 import org.json.JSONObject
 
