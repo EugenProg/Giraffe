@@ -25,15 +25,20 @@ import kotlinx.coroutines.launch
 import java.util.UUID
 
 class GiraffeInterceptor(val context: Context) : ClientInterceptor {
+    private val scope = CoroutineScope(Dispatchers.Default)
+    private var giraffeLogDao: GiraffeLogDao
+    private var notificationService: GiraffeNotificationService
+    private var analyzer: GiraffeMessageAnalyzer
 
     init {
         setApplicationContext(context)
+        giraffeLogDao = inject()
+        notificationService = inject()
+        analyzer = inject()
+        scope.launch {
+            giraffeLogDao.sanitizeStuckChats()
+        }
     }
-
-    val notificationService = inject<GiraffeNotificationService>()
-    val giraffeLogDao = inject<GiraffeLogDao>()
-    val analyzer = inject<GiraffeMessageAnalyzer>()
-    private val scope = CoroutineScope(Dispatchers.Default)
 
     override fun <ReqT, RespT> interceptCall(
         method: MethodDescriptor<ReqT, RespT>,

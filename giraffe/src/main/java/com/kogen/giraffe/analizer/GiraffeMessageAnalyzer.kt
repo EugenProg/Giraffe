@@ -71,17 +71,14 @@ class GiraffeMessageAnalyzer(
             val key = line.substring(0, colonIndex).trim()
             var value = line.substring(colonIndex + 1).trim()
 
-            // 1. Очищаем кавычки и бэкслеши на концах строки
             if (value.startsWith("\"") && value.endsWith("\"")) {
                 value = value.removeSurrounding("\"")
             }
 
-            // 2. Исправляем экранированные внутренние кавычки (например, \\\"id\\\" -> "id")
             if (value.contains("\\\"")) {
                 value = value.replace("\\\"", "\"")
             }
 
-            // 3. Пытаемся положить значение в JSON в правильном формате
             try {
                 when {
                     value.startsWith("{") && value.endsWith("}") -> {
@@ -96,8 +93,7 @@ class GiraffeMessageAnalyzer(
                         jsonObject.put(key, value)
                     }
                 }
-            } catch (e: Exception) {
-                // Если упало (например, это просто текст со скобками), сохраняем как обычную строку
+            } catch (_: Exception) {
                 jsonObject.put(key, value)
             }
         }
