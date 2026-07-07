@@ -5,4 +5,5 @@ import com.kogen.giraffe.ui.common.mvi.UiState
 
 internal data class ChatDetailsState(
     val chat: GiraffeChat? = null,
+    val showRequestDetails: Boolean = false,
 ): UiState

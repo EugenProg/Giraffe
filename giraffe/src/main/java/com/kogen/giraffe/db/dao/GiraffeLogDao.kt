@@ -59,7 +59,7 @@ interface GiraffeLogDao {
     @Query("UPDATE giraffe_chat SET status = :targetStatus WHERE status = :activeStatus")
     suspend fun sanitizeStuckChats(
         activeStatus: GiraffeChatStatus = GiraffeChatStatus.InProgress,
-        targetStatus: GiraffeChatStatus = GiraffeChatStatus.Error,
+        targetStatus: GiraffeChatStatus = GiraffeChatStatus.Interrupted,
     )
 
     @Query("DELETE FROM giraffe_chat WHERE chatId = :chatId")

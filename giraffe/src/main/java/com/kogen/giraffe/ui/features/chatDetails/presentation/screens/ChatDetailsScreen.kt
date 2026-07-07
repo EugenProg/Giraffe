@@ -1,5 +1,8 @@
 package com.kogen.giraffe.ui.features.chatDetails.presentation.screens
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -16,6 +19,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
@@ -24,6 +28,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
@@ -32,6 +37,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.kogen.giraffe.R
+import com.kogen.giraffe.ui.common.domain.models.GiraffeChat
+import com.kogen.giraffe.ui.common.domain.models.GiraffeChatStatus
 import com.kogen.giraffe.ui.common.domain.models.GiraffeContentType
 import com.kogen.giraffe.ui.common.domain.models.GiraffeMessage
 import com.kogen.giraffe.ui.common.main.BGSecondaryColor
@@ -39,6 +46,7 @@ import com.kogen.giraffe.ui.common.main.BackgroundColor
 import com.kogen.giraffe.ui.common.main.PrimaryColor
 import com.kogen.giraffe.ui.common.main.TextPrimaryColor
 import com.kogen.giraffe.ui.common.presentation.NoContentView
+import com.kogen.giraffe.ui.common.presentation.extensions.timestampToDateTime
 import com.kogen.giraffe.ui.common.presentation.extensions.timestampToTime
 import com.kogen.giraffe.ui.features.chatDetails.presentation.mvi.ChatDetailsAction
 import com.kogen.giraffe.ui.features.chatDetails.presentation.mvi.ChatDetailsState
@@ -83,7 +91,7 @@ internal fun ChatDetailsScreen(
                         style = TextStyle(
                             fontSize = 16.sp,
                         ),
-                        color = PrimaryColor,
+                        color = TextPrimaryColor,
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
                     )
@@ -101,9 +109,21 @@ internal fun ChatDetailsScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(it),
-            contentPadding = PaddingValues(vertical = 16.dp),
+            contentPadding = PaddingValues(bottom = 16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
+            item {
+                RequestDetailsView(
+                    chat = state.chat,
+                    isVisible = state.showRequestDetails,
+                    onOpen = {
+                        action(ChatDetailsAction.ShowRequestDetail)
+                    },
+                    onClose = {
+                        action(ChatDetailsAction.HideRequestDetail)
+                    }
+                )
+            }
             if (state.chat?.messages.isNullOrEmpty().not()) {
                 items(
                     items = state.chat.messages,
@@ -120,6 +140,93 @@ internal fun ChatDetailsScreen(
                     NoContentView()
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun RequestDetailsView(
+    chat: GiraffeChat?,
+    isVisible: Boolean,
+    onOpen: () -> Unit,
+    onClose: () -> Unit,
+) {
+    chat?.let { chat ->
+        if (isVisible) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .animateContentSize()
+            ) {
+                AnimatedVisibility(
+                    visible = true,
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(
+                                color = BGSecondaryColor,
+                                shape = RoundedCornerShape(bottomStart = 16.dp, bottomEnd = 16.dp)
+                            )
+                            .padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(2.dp),
+                    ) {
+                        val textStyle = TextStyle(
+                            fontSize = 14.sp,
+                            color = TextPrimaryColor,
+                        )
+                        Text(
+                            text = "Url: ${chat.url}",
+                            style = textStyle,
+                        )
+                        Text(
+                            text = "Start time: ${chat.timestamp.timestampToDateTime()}",
+                            style = textStyle,
+                        )
+                        if (chat.status != GiraffeChatStatus.InProgress) {
+                            Text(
+                                text = "End time: ${chat.messages.lastOrNull()?.timestamp?.timestampToDateTime()}",
+                                style = textStyle
+                            )
+                        }
+                        Text(
+                            text = "Status: ${chat.status}",
+                            style = textStyle,
+                        )
+                        if (chat.headers.isNotEmpty()) {
+                            Text(
+                                text = "Headers:",
+                                style = textStyle,
+                            )
+                            chat.headers.forEach { header ->
+                                Text(
+                                    text = "${header.key}: ${header.value}",
+                                    style = textStyle,
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center,
+        ) {
+            Icon(
+                modifier = Modifier
+                    .rotate(
+                        animateFloatAsState(if (isVisible) 180f else 0f).value
+                    )
+                    .clip(CircleShape)
+                    .clickable {
+                        if (isVisible) onClose() else onOpen()
+                    },
+                painter = painterResource(R.drawable.ic_chevron_down),
+                contentDescription = null,
+                tint = PrimaryColor,
+            )
         }
     }
 }

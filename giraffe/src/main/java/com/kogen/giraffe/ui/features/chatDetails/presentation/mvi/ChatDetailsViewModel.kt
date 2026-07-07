@@ -28,6 +28,18 @@ internal class ChatDetailsViewModel(
             is ChatDetailsAction.NavigateBack -> {
                 emitEffect(ChatDetailsEffect.NavigateBack)
             }
+
+            is ChatDetailsAction.ShowRequestDetail -> {
+                updateState {
+                    it.copy(showRequestDetails = true)
+                }
+            }
+
+            is ChatDetailsAction.HideRequestDetail -> {
+                updateState {
+                    it.copy(showRequestDetails = false)
+                }
+            }
         }
     }
 }

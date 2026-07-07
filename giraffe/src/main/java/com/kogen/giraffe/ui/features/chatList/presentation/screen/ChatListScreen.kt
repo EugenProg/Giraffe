@@ -1,9 +1,7 @@
 package com.kogen.giraffe.ui.features.chatList.presentation.screen
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -37,9 +35,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kogen.giraffe.R
 import com.kogen.giraffe.ui.common.domain.models.GiraffeChat
-import com.kogen.giraffe.ui.common.domain.models.GiraffeContentType
 import com.kogen.giraffe.ui.common.domain.models.color
-import com.kogen.giraffe.ui.common.domain.models.type
+import com.kogen.giraffe.ui.common.domain.models.icon
 import com.kogen.giraffe.ui.common.main.BGSecondaryColor
 import com.kogen.giraffe.ui.common.main.BackgroundColor
 import com.kogen.giraffe.ui.common.main.ErrorColor
@@ -76,7 +73,7 @@ internal fun ChatListScreen(
                         style = TextStyle(
                             fontSize = 24.sp,
                         ),
-                        color = PrimaryColor,
+                        color = TextPrimaryColor,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
@@ -91,19 +88,7 @@ internal fun ChatListScreen(
                             .padding(6.dp),
                         painter = painterResource(R.drawable.ic_trash),
                         contentDescription = null,
-                        tint = PrimaryColor,
-                    )
-                    Icon(
-                        modifier = Modifier
-                            .size(36.dp)
-                            .clip(RoundedCornerShape(8.dp))
-                            .clickable {
-
-                            }
-                            .padding(6.dp),
-                        painter = painterResource(R.drawable.ic_settings),
-                        contentDescription = null,
-                        tint = PrimaryColor,
+                        tint = TextPrimaryColor,
                     )
                 }
                 Box(
@@ -120,7 +105,7 @@ internal fun ChatListScreen(
                 .padding(it)
                 .fillMaxSize(),
             contentPadding = PaddingValues(vertical = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+//            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             if (state.chatList.isNotEmpty()) {
                 items(
@@ -154,33 +139,26 @@ private fun ChatListItem(chat: GiraffeChat, onClick: () -> Unit, onDismiss: () -
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp)
-            .border(width = 0.5.dp, color = chat.status.color(), shape = RoundedCornerShape(4.dp))
-            .clip(RoundedCornerShape(5.dp)),
+            .padding(horizontal = 16.dp),
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(4.dp)
-                .background(
-                    color = chat.status.color(),
-                    shape = RoundedCornerShape(
-                        topStart = 4.dp,
-                        topEnd = 4.dp,
-                    )
-                ),
-        )
         SwipeToDismissBoxView(
             onDismiss = onDismiss,
         ) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(BGSecondaryColor)
+                    .background(BackgroundColor)
                     .clickable(onClick = onClick)
                     .padding(8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
+                Icon(
+                    painter = painterResource(chat.status.icon()),
+                    contentDescription = null,
+                    tint = chat.status.color(),
+                    modifier = Modifier.size(24.dp),
+                )
+                Spacer(Modifier.width(8.dp))
                 Column(
                     modifier = Modifier
                         .weight(1f),
@@ -203,23 +181,14 @@ private fun ChatListItem(chat: GiraffeChat, onClick: () -> Unit, onDismiss: () -
                         overflow = TextOverflow.Ellipsis,
                     )
                 }
-
-                Box(
-                    modifier = Modifier
-                        .background(
-                            color = BackgroundColor,
-                            shape = RoundedCornerShape(8.dp),
-                        )
-                        .size(36.dp),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(
-                        text = (chat.messages.lastOrNull()?.contentType
-                            ?: GiraffeContentType.PlainText).type(),
-                    )
-                }
             }
         }
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(BGSecondaryColor)
+                .height(1.5.dp),
+        )
     }
 }
 
