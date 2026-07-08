@@ -1,7 +1,9 @@
 package com.kogen.giraffe.analizer.utils
 
 import android.content.Context
+import android.graphics.BitmapFactory
 import android.util.Base64
+import android.util.Log
 import java.io.File
 import java.io.FileOutputStream
 import java.util.UUID
@@ -106,6 +108,29 @@ internal object MediaSignatures {
             null
         }
     }
+
+    val PNG_END = byteArrayOf(0x49.toByte(),
+        0x45.toByte(),
+        0x4E.toByte(),
+        0x44.toByte(),
+        0xAE.toByte(),
+        0x42.toByte(),
+        0x60.toByte(),
+        0x82.toByte())
+
+    fun findEndOfMedia(bytes: ByteArray, start: Int, signatureEnd: ByteArray): Int {
+        for (i in start until bytes.size - signatureEnd.size) {
+            var match = true
+            for (j in signatureEnd.indices) {
+                if (bytes[i + j] != signatureEnd[j]) {
+                    match = false
+                    break
+                }
+            }
+            if (match) return i + signatureEnd.size
+        }
+        return -1
+    }
 }
 
 fun saveMediaToCache(
@@ -118,6 +143,15 @@ fun saveMediaToCache(
         val folder = File(context.cacheDir, "giraffe_media").apply { mkdirs() }
         val file = File(folder, "${prefix}_${UUID.randomUUID()}.$extension")
         FileOutputStream(file).use { it.write(bytes) }
+
+        try {
+            val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+            Log.d(">>> tryDecode", "bitmap: ${bitmap.width}x${bitmap.height}, bytes: ${bytes.size}")
+        } catch (e: Exception) {
+            Log.e(">>>", e.toString())
+        }
+
+
         file.absolutePath
     } catch (_: Exception) {
         null

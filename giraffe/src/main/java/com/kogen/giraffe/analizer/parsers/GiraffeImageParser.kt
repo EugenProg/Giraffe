@@ -7,22 +7,33 @@ import com.kogen.giraffe.analizer.utils.saveMediaToCache
 import com.kogen.giraffe.ui.common.domain.models.GiraffeContentType
 
 internal class GiraffeImageParser : ContentParser {
-    override fun parse(message: Any, context: Context): AnalysisResult? {
-        val str = message.toString()
-        val bytes = MediaSignatures.tryDecodeBase64(str)
-            ?: MediaSignatures.tryDecodeProtobufOctal(str)
-            ?: str.toByteArray(Charsets.ISO_8859_1)
+    override fun parse(message: String, originalBytes: ByteArray, context: Context): AnalysisResult? {
+        val pngHeader = byteArrayOf(0x89.toByte(), 0x50.toByte(), 0x4E.toByte(), 0x47.toByte())
 
-        if (MediaSignatures.isImage(bytes)) {
-            val path = saveMediaToCache(context, bytes, "img", "png")
-            if (path != null) {
-                return AnalysisResult(
-                    contentType = GiraffeContentType.Image,
-                    textContent = str,
-                    filePath = path,
-                )
+        var startIndex = -1
+        for (i in 0 until originalBytes.size - pngHeader.size) {
+            var match = true
+            for (j in pngHeader.indices) {
+                if (originalBytes[i + j] != pngHeader[j]) {
+                    match = false
+                    break
+                }
+            }
+            if (match) {
+                startIndex = i
+                break
             }
         }
-        return null
+
+        if (startIndex == -1) return null
+
+        val endIndex = MediaSignatures.findEndOfMedia(originalBytes, startIndex, MediaSignatures.PNG_END)
+
+        if (endIndex == -1) return null
+
+        val chunk = originalBytes.copyOfRange(startIndex, endIndex)
+        val path = saveMediaToCache(context, chunk, "img", "png")
+
+        return path?.let { AnalysisResult(GiraffeContentType.Image, message, it) }
     }
 }

@@ -105,7 +105,6 @@ internal fun ChatListScreen(
                 .padding(it)
                 .fillMaxSize(),
             contentPadding = PaddingValues(vertical = 16.dp),
-//            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             if (state.chatList.isNotEmpty()) {
                 items(

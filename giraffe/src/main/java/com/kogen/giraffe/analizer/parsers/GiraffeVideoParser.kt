@@ -7,18 +7,21 @@ import com.kogen.giraffe.analizer.utils.saveMediaToCache
 import com.kogen.giraffe.ui.common.domain.models.GiraffeContentType
 
 internal class GiraffeVideoParser : ContentParser {
-    override fun parse(message: Any, context: Context): AnalysisResult? {
-        val str = message.toString()
-        val bytes = MediaSignatures.tryDecodeBase64(str)
-            ?: MediaSignatures.tryDecodeProtobufOctal(str)
-            ?: str.toByteArray(Charsets.ISO_8859_1)
+    override fun parse(
+        message: String,
+        originalBytes: ByteArray,
+        context: Context
+    ): AnalysisResult? {
+        val bytes = MediaSignatures.tryDecodeBase64(message)
+            ?: MediaSignatures.tryDecodeProtobufOctal(message)
+            ?: message.toByteArray(Charsets.ISO_8859_1)
 
         if (MediaSignatures.isVideo(bytes)) {
             val path = saveMediaToCache(context, bytes, "video", "mp4")
             if (path != null) {
                 return AnalysisResult(
                     contentType = GiraffeContentType.Video,
-                    textContent = str,
+                    textContent = message,
                     filePath = path
                 )
             }

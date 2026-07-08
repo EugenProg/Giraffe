@@ -7,18 +7,21 @@ import com.kogen.giraffe.analizer.utils.saveMediaToCache
 import com.kogen.giraffe.ui.common.domain.models.GiraffeContentType
 
 internal class GiraffeAudioParser : ContentParser {
-    override fun parse(message: Any, context: Context): AnalysisResult? {
-        val str = message.toString()
-        val bytes = MediaSignatures.tryDecodeBase64(str)
-            ?: MediaSignatures.tryDecodeProtobufOctal(str)
-            ?: str.toByteArray(Charsets.ISO_8859_1)
+    override fun parse(
+        message: String,
+        originalBytes: ByteArray,
+        context: Context
+    ): AnalysisResult? {
+        val bytes = MediaSignatures.tryDecodeBase64(message)
+            ?: MediaSignatures.tryDecodeProtobufOctal(message)
+            ?: message.toByteArray(Charsets.ISO_8859_1)
 
         if (MediaSignatures.isAudio(bytes)) {
             val path = saveMediaToCache(context, bytes, "audio", "mp3")
             if (path != null) {
                 return AnalysisResult(
                     contentType = GiraffeContentType.Audio,
-                    textContent = str,
+                    textContent = message,
                     filePath = path
                 )
             }

@@ -1,6 +1,7 @@
 package com.kogen.giraffe.analizer
 
 import android.content.Context
+import com.google.protobuf.MessageLite
 import com.kogen.giraffe.analizer.parsers.ContentParser
 import com.kogen.giraffe.analizer.parsers.GiraffeAudioParser
 import com.kogen.giraffe.analizer.parsers.GiraffeImageParser
@@ -40,18 +41,33 @@ class GiraffeMessageAnalyzer(
 
 
     fun analyze(message: Any): AnalysisResult {
-        val transformedMessage = transformProtobufStringToValues(message)
+        val originalBytes =
+            (message as? MessageLite)?.toByteArray() ?: message.toString().toByteArray()
+        val textRepresentation = transformProtobufStringToValues(message)
 
         for (parser in allParsers) {
-            val result = parser.parse(transformedMessage, context)
+            val result = parser.parse(textRepresentation, originalBytes, context)
             if (result != null) return result
         }
 
         return AnalysisResult(
-            contentType = GiraffeContentType.Unknown,
-            textContent = transformedMessage.take(1000),
-            filePath = null
+            GiraffeContentType.Unknown,
+            textRepresentation.take(1000),
+            null,
         )
+
+//        val transformedMessage = transformProtobufStringToValues(message)
+//
+//        for (parser in allParsers) {
+//            val result = parser.parse(transformedMessage, context)
+//            if (result != null) return result
+//        }
+//
+//        return AnalysisResult(
+//            contentType = GiraffeContentType.Unknown,
+//            textContent = transformedMessage.take(1000),
+//            filePath = null
+//        )
     }
 
     private fun transformProtobufStringToValues(message: Any): String {

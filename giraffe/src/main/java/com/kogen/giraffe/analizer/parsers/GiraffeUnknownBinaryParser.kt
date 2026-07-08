@@ -7,17 +7,20 @@ import com.kogen.giraffe.analizer.utils.saveMediaToCache
 import com.kogen.giraffe.ui.common.domain.models.GiraffeContentType
 
 internal class GiraffeUnknownBinaryParser : ContentParser {
-    override fun parse(message: Any, context: Context): AnalysisResult? {
-        val str = message.toString()
+    override fun parse(
+        message: String,
+        originalBytes: ByteArray,
+        context: Context
+    ): AnalysisResult? {
 
-        val bytes = MediaSignatures.tryDecodeProtobufOctal(str) ?: return null
+        val bytes = MediaSignatures.tryDecodeProtobufOctal(message) ?: return null
 
         if (bytes.isNotEmpty()) {
             val path = saveMediaToCache(context, bytes, "binary", "bin")
             if (path != null) {
                 return AnalysisResult(
                     contentType = GiraffeContentType.Unknown,
-                    textContent = str,
+                    textContent = message,
                     filePath = path
                 )
             }
