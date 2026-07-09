@@ -9,17 +9,19 @@ import java.io.FileOutputStream
 import java.util.UUID
 
 internal object MediaSignatures {
-    private val JPEG = byteArrayOf(0xFF.toByte(), 0xD8.toByte(), 0xFF.toByte())
-    private val PNG = byteArrayOf(0x89.toByte(), 0x50.toByte(), 0x4E.toByte(), 0x47.toByte())
-    private val GIF = byteArrayOf(0x47.toByte(), 0x49.toByte(), 0x46.toByte(), 0x38.toByte())
-    private val WEBP =
+    val JPEG = byteArrayOf(0xFF.toByte(), 0xD8.toByte(), 0xFF.toByte())
+    val PNG = byteArrayOf(0x89.toByte(), 0x50.toByte(), 0x4E.toByte(), 0x47.toByte())
+    val GIF = byteArrayOf(0x47.toByte(), 0x49.toByte(), 0x46.toByte(), 0x38.toByte())
+    val WEBP =
         byteArrayOf(0x52.toByte(), 0x49.toByte(), 0x46.toByte(), 0x46.toByte())
+    val WEBP_TAG = byteArrayOf(0x57.toByte(), 0x45.toByte(), 0x42.toByte(), 0x50.toByte())
 
-    private val MP3 = byteArrayOf(0x49.toByte(), 0x44.toByte(), 0x33.toByte())
-    private val WAV =
+    val MP3 = byteArrayOf(0x49.toByte(), 0x44.toByte(), 0x33.toByte())
+    val WAV =
         byteArrayOf(0x52.toByte(), 0x49.toByte(), 0x46.toByte(), 0x46.toByte())
+    val WAVE_TAG = byteArrayOf(0x57.toByte(), 0x41.toByte(), 0x56.toByte(), 0x45.toByte())
 
-    private val MP4_FTYP = byteArrayOf(0x66.toByte(), 0x74.toByte(), 0x79.toByte(), 0x70.toByte())
+    val MP4_FTYP = byteArrayOf(0x66.toByte(), 0x74.toByte(), 0x79.toByte(), 0x70.toByte())
     private val THREE_GP = byteArrayOf(0x33.toByte(), 0x67.toByte(), 0x70.toByte())
 
     fun isImage(bytes: ByteArray): Boolean {
@@ -117,6 +119,8 @@ internal object MediaSignatures {
         0x42.toByte(),
         0x60.toByte(),
         0x82.toByte())
+    val JPEG_END = byteArrayOf(0xFF.toByte(), 0xD9.toByte())
+    val GIF_END = byteArrayOf(0x3B.toByte())
 
     fun findEndOfMedia(bytes: ByteArray, start: Int, signatureEnd: ByteArray): Int {
         for (i in start until bytes.size - signatureEnd.size) {
@@ -130,6 +134,53 @@ internal object MediaSignatures {
             if (match) return i + signatureEnd.size
         }
         return -1
+    }
+
+    fun indexOf(bytes: ByteArray, signature: ByteArray, from: Int = 0): Int {
+        for (i in from..bytes.size - signature.size) {
+            var match = true
+            for (j in signature.indices) {
+                if (bytes[i + j] != signature[j]) {
+                    match = false
+                    break
+                }
+            }
+            if (match) return i
+        }
+        return -1
+    }
+
+    // RIFF containers (WEBP, WAV) have no fixed end marker: the chunk size
+    // (4 bytes, little-endian, right after "RIFF") tells us where they end.
+    fun findRiffEnd(bytes: ByteArray, riffStart: Int): Int {
+        if (riffStart + 8 > bytes.size) return -1
+        val chunkSize = (bytes[riffStart + 4].toInt() and 0xFF) or
+                ((bytes[riffStart + 5].toInt() and 0xFF) shl 8) or
+                ((bytes[riffStart + 6].toInt() and 0xFF) shl 16) or
+                ((bytes[riffStart + 7].toInt() and 0xFF) shl 24)
+        val end = riffStart + 8 + chunkSize
+        return if (end in (riffStart + 8)..bytes.size) end else -1
+    }
+
+    // MP4/ISO-BMFF is a sequence of [4-byte size][4-byte type][data] boxes.
+    // "ftyp" is the first box; walk box sizes from there to find where the file actually ends.
+    fun findMp4End(bytes: ByteArray, ftypIndex: Int): Int {
+        var pos = ftypIndex - 4
+        if (pos < 0) return -1
+
+        while (pos + 8 <= bytes.size) {
+            val boxSize = ((bytes[pos].toInt() and 0xFF) shl 24) or
+                    ((bytes[pos + 1].toInt() and 0xFF) shl 16) or
+                    ((bytes[pos + 2].toInt() and 0xFF) shl 8) or
+                    (bytes[pos + 3].toInt() and 0xFF)
+            if (boxSize < 8) break
+
+            val next = pos + boxSize
+            if (next <= pos || next > bytes.size) break
+            pos = next
+        }
+
+        return if (pos > ftypIndex) pos else -1
     }
 }
 

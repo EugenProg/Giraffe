@@ -97,7 +97,7 @@ internal class GiraffeJsonParser(val mediaParsers: List<ContentParser>) : Conten
         for (i in 0 until array.length()) {
             when (val value = array.get(i)) {
                 is JSONObject -> {
-                    val path = scanJsonObject(value,  originalBytes, context, onMediaFound)
+                    val path = scanJsonObject(value, originalBytes, context, onMediaFound)
                     if (firstFilePath == null) firstFilePath = path
                 }
 

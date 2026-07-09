@@ -14,10 +14,5 @@
             android:process=":giraffe_process"
             android:taskAffinity="com.kogen.giraffe.task"
             android:theme="@style/Theme.AppCompat.NoActionBar" />
-
-        <provider
-            android:name=".GiraffeDataProvider"
-            android:authorities="${giraffeAuthority}"
-            android:exported="true" />
     </application>
 </manifest>

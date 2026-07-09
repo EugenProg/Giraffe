@@ -32,13 +32,6 @@ android {
             java.directories.add("build/generated/ksp/release/kotlin")
         }
     }
-    buildFeatures {
-        buildConfig = true
-    }
-    defaultConfig {
-        buildConfigField(type = "String", name = "giraffeAuthority", value = "\"${project.group}.giraffe.data\"")
-        manifestPlaceholders["giraffeAuthority"] = "${project.group}.giraffe.data"
-    }
 }
 
 dependencies {

@@ -7,33 +7,52 @@ import com.kogen.giraffe.analizer.utils.saveMediaToCache
 import com.kogen.giraffe.ui.common.domain.models.GiraffeContentType
 
 internal class GiraffeImageParser : ContentParser {
+    private enum class Format(val extension: String) {
+        PNG("png"), JPEG("jpg"), GIF("gif"), WEBP("webp")
+    }
+
+    private data class Match(val start: Int, val format: Format)
+
     override fun parse(message: String, originalBytes: ByteArray, context: Context): AnalysisResult? {
-        val pngHeader = byteArrayOf(0x89.toByte(), 0x50.toByte(), 0x4E.toByte(), 0x47.toByte())
+        val match = findEarliestMatch(originalBytes) ?: return null
 
-        var startIndex = -1
-        for (i in 0 until originalBytes.size - pngHeader.size) {
-            var match = true
-            for (j in pngHeader.indices) {
-                if (originalBytes[i + j] != pngHeader[j]) {
-                    match = false
-                    break
-                }
-            }
-            if (match) {
-                startIndex = i
-                break
-            }
+        val endIndex = when (match.format) {
+            Format.PNG -> MediaSignatures.findEndOfMedia(originalBytes, match.start, MediaSignatures.PNG_END)
+            Format.JPEG -> MediaSignatures.findEndOfMedia(originalBytes, match.start, MediaSignatures.JPEG_END)
+            Format.GIF -> MediaSignatures.findEndOfMedia(originalBytes, match.start, MediaSignatures.GIF_END)
+            Format.WEBP -> MediaSignatures.findRiffEnd(originalBytes, match.start)
         }
-
-        if (startIndex == -1) return null
-
-        val endIndex = MediaSignatures.findEndOfMedia(originalBytes, startIndex, MediaSignatures.PNG_END)
-
         if (endIndex == -1) return null
 
-        val chunk = originalBytes.copyOfRange(startIndex, endIndex)
-        val path = saveMediaToCache(context, chunk, "img", "png")
+        val chunk = originalBytes.copyOfRange(match.start, endIndex)
+        val path = saveMediaToCache(context, chunk, "img", match.format.extension)
 
         return path?.let { AnalysisResult(GiraffeContentType.Image, message, it) }
+    }
+
+    private fun findEarliestMatch(bytes: ByteArray): Match? {
+        val candidates = listOfNotNull(
+            MediaSignatures.indexOf(bytes, MediaSignatures.PNG).takeIf { it != -1 }
+                ?.let { Match(it, Format.PNG) },
+            MediaSignatures.indexOf(bytes, MediaSignatures.JPEG).takeIf { it != -1 }
+                ?.let { Match(it, Format.JPEG) },
+            MediaSignatures.indexOf(bytes, MediaSignatures.GIF).takeIf { it != -1 }
+                ?.let { Match(it, Format.GIF) },
+            findWebpStart(bytes)?.let { Match(it, Format.WEBP) },
+        )
+        return candidates.minByOrNull { it.start }
+    }
+
+    // RIFF is shared with WAV, so a "RIFF" hit only counts as WEBP once the "WEBP" tag at offset+8 confirms it.
+    private fun findWebpStart(bytes: ByteArray): Int? {
+        var from = 0
+        while (true) {
+            val riffIndex = MediaSignatures.indexOf(bytes, MediaSignatures.WEBP, from)
+            if (riffIndex == -1) return null
+            if (MediaSignatures.indexOf(bytes, MediaSignatures.WEBP_TAG, riffIndex + 8) == riffIndex + 8) {
+                return riffIndex
+            }
+            from = riffIndex + 1
+        }
     }
 }

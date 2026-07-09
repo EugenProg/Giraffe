@@ -7,25 +7,17 @@ import com.kogen.giraffe.analizer.utils.saveMediaToCache
 import com.kogen.giraffe.ui.common.domain.models.GiraffeContentType
 
 internal class GiraffeVideoParser : ContentParser {
-    override fun parse(
-        message: String,
-        originalBytes: ByteArray,
-        context: Context
-    ): AnalysisResult? {
-        val bytes = MediaSignatures.tryDecodeBase64(message)
-            ?: MediaSignatures.tryDecodeProtobufOctal(message)
-            ?: message.toByteArray(Charsets.ISO_8859_1)
+    override fun parse(message: String, originalBytes: ByteArray, context: Context): AnalysisResult? {
+        // "ftyp" is the box type, but the box (and the file) actually starts 4 bytes earlier - that's the box's size field.
+        val ftypIndex = MediaSignatures.indexOf(originalBytes, MediaSignatures.MP4_FTYP)
+        if (ftypIndex < 4) return null
 
-        if (MediaSignatures.isVideo(bytes)) {
-            val path = saveMediaToCache(context, bytes, "video", "mp4")
-            if (path != null) {
-                return AnalysisResult(
-                    contentType = GiraffeContentType.Video,
-                    textContent = message,
-                    filePath = path
-                )
-            }
-        }
-        return null
+        val endIndex = MediaSignatures.findMp4End(originalBytes, ftypIndex)
+            .let { if (it == -1) originalBytes.size else it }
+
+        val chunk = originalBytes.copyOfRange(ftypIndex - 4, endIndex)
+        val path = saveMediaToCache(context, chunk, "video", "mp4")
+
+        return path?.let { AnalysisResult(GiraffeContentType.Video, message, it) }
     }
 }

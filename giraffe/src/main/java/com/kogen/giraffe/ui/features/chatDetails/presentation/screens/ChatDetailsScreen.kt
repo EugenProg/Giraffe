@@ -32,14 +32,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
-import coil.request.ImageRequest
 import com.kogen.giraffe.R
 import com.kogen.giraffe.ui.common.domain.models.GiraffeChat
 import com.kogen.giraffe.ui.common.domain.models.GiraffeChatStatus
@@ -52,7 +50,6 @@ import com.kogen.giraffe.ui.common.main.TextPrimaryColor
 import com.kogen.giraffe.ui.common.presentation.NoContentView
 import com.kogen.giraffe.ui.common.presentation.extensions.timestampToDateTime
 import com.kogen.giraffe.ui.common.presentation.extensions.timestampToTime
-import com.kogen.giraffe.ui.common.presentation.extensions.transformFilePath
 import com.kogen.giraffe.ui.features.chatDetails.presentation.mvi.ChatDetailsAction
 import com.kogen.giraffe.ui.features.chatDetails.presentation.mvi.ChatDetailsState
 import java.io.File
@@ -269,27 +266,12 @@ private fun ServerMessageView(message: GiraffeMessage) {
             if (message.contentType == GiraffeContentType.Image &&
                 message.filePath.isNullOrBlank().not()
             ) {
-                val file = File(message.filePath)
-                val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-                BitmapFactory.decodeFile(file.absolutePath, options)
 
-                Log.d(">>>", "Format: ${options.outMimeType}, W: ${options.outWidth}, H: ${options.outHeight}")
                 AsyncImage(
                     modifier = Modifier.size(200.dp),
-                    model = ImageRequest.Builder(LocalContext.current)
-                        .data(message.filePath.transformFilePath())
-                        .allowHardware(false)
-                        .build(),
+                    model = File(message.filePath),
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
-                    onState = {
-                        if (it is coil.compose.AsyncImagePainter.State.Error) {
-                            val throwable = it.result.throwable
-                            Log.e(">>>", "Coil Load Error: ", throwable)
-                        } else {
-                            Log.d(">>>", "state: $it")
-                        }
-                    }
                 )
             }
         }
