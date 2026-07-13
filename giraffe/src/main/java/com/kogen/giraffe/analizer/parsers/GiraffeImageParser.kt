@@ -1,7 +1,6 @@
 package com.kogen.giraffe.analizer.parsers
 
 import android.content.Context
-import com.kogen.giraffe.analizer.AnalysisResult
 import com.kogen.giraffe.analizer.utils.MediaSignatures
 import com.kogen.giraffe.analizer.utils.saveMediaToCache
 import com.kogen.giraffe.ui.common.domain.models.GiraffeContentType
@@ -13,13 +12,28 @@ internal class GiraffeImageParser : ContentParser {
 
     private data class Match(val start: Int, val format: Format)
 
-    override fun parse(message: String, originalBytes: ByteArray, context: Context): AnalysisResult? {
+    override fun parse(originalBytes: ByteArray, context: Context): ParserResult? {
         val match = findEarliestMatch(originalBytes) ?: return null
 
         val endIndex = when (match.format) {
-            Format.PNG -> MediaSignatures.findEndOfMedia(originalBytes, match.start, MediaSignatures.PNG_END)
-            Format.JPEG -> MediaSignatures.findEndOfMedia(originalBytes, match.start, MediaSignatures.JPEG_END)
-            Format.GIF -> MediaSignatures.findEndOfMedia(originalBytes, match.start, MediaSignatures.GIF_END)
+            Format.PNG -> MediaSignatures.findEndOfMedia(
+                originalBytes,
+                match.start,
+                MediaSignatures.PNG_END
+            )
+
+            Format.JPEG -> MediaSignatures.findEndOfMedia(
+                originalBytes,
+                match.start,
+                MediaSignatures.JPEG_END
+            )
+
+            Format.GIF -> MediaSignatures.findEndOfMedia(
+                originalBytes,
+                match.start,
+                MediaSignatures.GIF_END
+            )
+
             Format.WEBP -> MediaSignatures.findRiffEnd(originalBytes, match.start)
         }
         if (endIndex == -1) return null
@@ -27,7 +41,13 @@ internal class GiraffeImageParser : ContentParser {
         val chunk = originalBytes.copyOfRange(match.start, endIndex)
         val path = saveMediaToCache(context, chunk, "img", match.format.extension)
 
-        return path?.let { AnalysisResult(GiraffeContentType.Image, message, it) }
+        return path?.let {
+            ParserResult(
+                contentType = GiraffeContentType.Image,
+                filePath = it,
+                bytes = chunk,
+            )
+        }
     }
 
     private fun findEarliestMatch(bytes: ByteArray): Match? {
@@ -43,13 +63,17 @@ internal class GiraffeImageParser : ContentParser {
         return candidates.minByOrNull { it.start }
     }
 
-    // RIFF is shared with WAV, so a "RIFF" hit only counts as WEBP once the "WEBP" tag at offset+8 confirms it.
     private fun findWebpStart(bytes: ByteArray): Int? {
         var from = 0
         while (true) {
             val riffIndex = MediaSignatures.indexOf(bytes, MediaSignatures.WEBP, from)
             if (riffIndex == -1) return null
-            if (MediaSignatures.indexOf(bytes, MediaSignatures.WEBP_TAG, riffIndex + 8) == riffIndex + 8) {
+            if (MediaSignatures.indexOf(
+                    bytes,
+                    MediaSignatures.WEBP_TAG,
+                    riffIndex + 8
+                ) == riffIndex + 8
+            ) {
                 return riffIndex
             }
             from = riffIndex + 1

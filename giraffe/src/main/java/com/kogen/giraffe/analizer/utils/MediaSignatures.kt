@@ -24,30 +24,6 @@ internal object MediaSignatures {
     val MP4_FTYP = byteArrayOf(0x66.toByte(), 0x74.toByte(), 0x79.toByte(), 0x70.toByte())
     private val THREE_GP = byteArrayOf(0x33.toByte(), 0x67.toByte(), 0x70.toByte())
 
-    fun isImage(bytes: ByteArray): Boolean {
-        if (bytes.size < 4) return false
-        return bytes.startsWith(JPEG) || bytes.startsWith(PNG) ||
-                bytes.startsWith(GIF) || (bytes.startsWith(WEBP) && bytes.extractString(
-            8,
-            4
-        ) == "WEBP")
-    }
-
-    fun isAudio(bytes: ByteArray): Boolean {
-        if (bytes.size < 4) return false
-        return bytes.startsWith(MP3) || (bytes.startsWith(WAV) && bytes.extractString(
-            8,
-            4
-        ) == "WAVE")
-    }
-
-    fun isVideo(bytes: ByteArray): Boolean {
-        if (bytes.size < 12) return false
-        val hasFtyp = bytes[4] == MP4_FTYP[0] && bytes[5] == MP4_FTYP[1] &&
-                bytes[6] == MP4_FTYP[2] && bytes[7] == MP4_FTYP[3]
-        return hasFtyp
-    }
-
     fun tryDecodeBase64(str: String): ByteArray? {
         val cleaned = str.substringAfter("base64,").trim()
         if (cleaned.length < 8 || cleaned.length % 4 != 0) return null
@@ -56,19 +32,6 @@ internal object MediaSignatures {
         } catch (e: IllegalArgumentException) {
             null
         }
-    }
-
-    private fun ByteArray.startsWith(prefix: ByteArray): Boolean {
-        if (this.size < prefix.size) return false
-        for (i in prefix.indices) {
-            if (this[i] != prefix[i]) return false
-        }
-        return true
-    }
-
-    private fun ByteArray.extractString(offset: Int, length: Int): String {
-        if (this.size < offset + length) return ""
-        return String(this, offset, length, Charsets.US_ASCII)
     }
 
     fun tryDecodeProtobufOctal(str: String): ByteArray? {
@@ -195,12 +158,12 @@ fun saveMediaToCache(
         val file = File(folder, "${prefix}_${UUID.randomUUID()}.$extension")
         FileOutputStream(file).use { it.write(bytes) }
 
-        try {
-            val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
-            Log.d(">>> tryDecode", "bitmap: ${bitmap.width}x${bitmap.height}, bytes: ${bytes.size}")
-        } catch (e: Exception) {
-            Log.e(">>>", e.toString())
-        }
+//        try {
+//            val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+//            Log.d(">>> tryDecode", "bitmap: ${bitmap.width}x${bitmap.height}, bytes: ${bytes.size}")
+//        } catch (e: Exception) {
+//            Log.e(">>>", e.toString())
+//        }
 
 
         file.absolutePath

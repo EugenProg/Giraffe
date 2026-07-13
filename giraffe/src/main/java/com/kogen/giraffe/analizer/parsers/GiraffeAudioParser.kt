@@ -13,7 +13,7 @@ internal class GiraffeAudioParser : ContentParser {
 
     private data class Match(val start: Int, val format: Format)
 
-    override fun parse(message: String, originalBytes: ByteArray, context: Context): AnalysisResult? {
+    override fun parse(originalBytes: ByteArray, context: Context): ParserResult? {
         val match = findEarliestMatch(originalBytes) ?: return null
 
         val endIndex = when (match.format) {
@@ -25,7 +25,13 @@ internal class GiraffeAudioParser : ContentParser {
         val chunk = originalBytes.copyOfRange(match.start, endIndex)
         val path = saveMediaToCache(context, chunk, "audio", match.format.extension)
 
-        return path?.let { AnalysisResult(GiraffeContentType.Audio, message, it) }
+        return path?.let {
+            ParserResult(
+                contentType = GiraffeContentType.Audio,
+                filePath = it,
+                bytes = chunk,
+            )
+        }
     }
 
     private fun findEarliestMatch(bytes: ByteArray): Match? {
