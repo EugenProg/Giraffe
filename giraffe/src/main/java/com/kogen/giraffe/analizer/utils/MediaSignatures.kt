@@ -1,9 +1,7 @@
 package com.kogen.giraffe.analizer.utils
 
 import android.content.Context
-import android.graphics.BitmapFactory
 import android.util.Base64
-import android.util.Log
 import java.io.File
 import java.io.FileOutputStream
 import java.util.UUID
@@ -34,54 +32,27 @@ internal object MediaSignatures {
         }
     }
 
-    fun tryDecodeProtobufOctal(str: String): ByteArray? {
-        if (!str.contains("\\")) return null
-
+    fun isLikelyUtf8Text(bytes: ByteArray): Boolean {
         return try {
-            val bytes = mutableListOf<Byte>()
-            var i = 0
-            while (i < str.length) {
-                if (str[i] == '\\') {
-                    if (i + 1 < str.length && str[i + 1].isDigit()) {
-                        var length = 0
-                        while (length < 3 && i + 1 + length < str.length && str[i + 1 + length].isDigit()) {
-                            length++
-                        }
-                        val octalStr = str.substring(i + 1, i + 1 + length)
-                        bytes.add(octalStr.toInt(8).toByte())
-                        i += 1 + length
-                    } else if (i + 1 < str.length) {
-                        when (str[i + 1]) {
-                            'n' -> bytes.add('\n'.code.toByte())
-                            'r' -> bytes.add('\r'.code.toByte())
-                            't' -> bytes.add('\t'.code.toByte())
-                            'v' -> bytes.add(0x0B.toByte())
-                            '\\' -> bytes.add('\\'.code.toByte())
-                            '\"' -> bytes.add('\"'.code.toByte())
-                            '\'' -> bytes.add('\''.code.toByte())
-                            else -> bytes.add(str[i + 1].code.toByte())
-                        }
-                        i += 2
-                    }
-                } else {
-                    bytes.add(str[i].code.toByte())
-                    i++
-                }
-            }
-            bytes.toByteArray()
+            val decoded = String(bytes, Charsets.UTF_8)
+            val reEncoded = decoded.toByteArray(Charsets.UTF_8)
+            reEncoded.contentEquals(bytes) &&
+                    decoded.none { it.code < 0x09 }
         } catch (_: Exception) {
-            null
+            false
         }
     }
 
-    val PNG_END = byteArrayOf(0x49.toByte(),
+    val PNG_END = byteArrayOf(
+        0x49.toByte(),
         0x45.toByte(),
         0x4E.toByte(),
         0x44.toByte(),
         0xAE.toByte(),
         0x42.toByte(),
         0x60.toByte(),
-        0x82.toByte())
+        0x82.toByte()
+    )
     val JPEG_END = byteArrayOf(0xFF.toByte(), 0xD9.toByte())
     val GIF_END = byteArrayOf(0x3B.toByte())
 
@@ -113,8 +84,6 @@ internal object MediaSignatures {
         return -1
     }
 
-    // RIFF containers (WEBP, WAV) have no fixed end marker: the chunk size
-    // (4 bytes, little-endian, right after "RIFF") tells us where they end.
     fun findRiffEnd(bytes: ByteArray, riffStart: Int): Int {
         if (riffStart + 8 > bytes.size) return -1
         val chunkSize = (bytes[riffStart + 4].toInt() and 0xFF) or
@@ -125,8 +94,6 @@ internal object MediaSignatures {
         return if (end in (riffStart + 8)..bytes.size) end else -1
     }
 
-    // MP4/ISO-BMFF is a sequence of [4-byte size][4-byte type][data] boxes.
-    // "ftyp" is the first box; walk box sizes from there to find where the file actually ends.
     fun findMp4End(bytes: ByteArray, ftypIndex: Int): Int {
         var pos = ftypIndex - 4
         if (pos < 0) return -1
@@ -157,13 +124,6 @@ fun saveMediaToCache(
         val folder = File(context.cacheDir, "giraffe_media").apply { mkdirs() }
         val file = File(folder, "${prefix}_${UUID.randomUUID()}.$extension")
         FileOutputStream(file).use { it.write(bytes) }
-
-//        try {
-//            val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
-//            Log.d(">>> tryDecode", "bitmap: ${bitmap.width}x${bitmap.height}, bytes: ${bytes.size}")
-//        } catch (e: Exception) {
-//            Log.e(">>>", e.toString())
-//        }
 
 
         file.absolutePath

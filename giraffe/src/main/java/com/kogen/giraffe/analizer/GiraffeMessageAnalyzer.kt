@@ -14,7 +14,6 @@ import com.kogen.giraffe.ui.common.domain.models.GiraffeContentType
 import kz.evko.kogen_di.annotations.KoGenComponent
 import org.json.JSONArray
 import org.json.JSONObject
-import java.io.ByteArrayOutputStream
 
 @KoGenComponent(true)
 class GiraffeMessageAnalyzer(
@@ -50,45 +49,39 @@ class GiraffeMessageAnalyzer(
         var parsingResult: ParserResult? = null
 
         for (parser in allParsers) {
-            val result = parser.parse(originalBytes, context)
-            result?.let {
+            parser.parse(originalBytes, context)?.let {
                 parsingResult = it
-//                val s = message.toString().substringAfter("raw_bytes: \"")
-//                Log.d("TEST", s.take(100))
-//
-//                it.bytes.take(20).forEach {
-//                    Log.d("TEST", "%02x".format(it))
-//                }
-                Log.d(">>>", replaceBinary(message.toString(), it.bytes, "ХУЙ"))
+                break
             }
         }
 
-//        val encoded = removeBytesFromEscapedString(message.toString(), originalBytes)
-//
-//        val result = message.toString().replace(encoded, "[FILE_REMOVED]")
-//        Log.d(">>>", encoded)
 
         val trimmedStr = textRepresentation.trim()
 
         val isJson = ((trimmedStr.startsWith("{") && trimmedStr.endsWith("}")) ||
                 (trimmedStr.startsWith("[") && trimmedStr.endsWith("]")))
 
-//        val readyText = when {
-//            isJson && parsingResult != null -> {
-//                findBytesInEscapedString(
-//                    textRepresentation,
-//                    parsingResult.bytes,
-//                )
-//            }
-//            isJson -> textRepresentation
-//            else -> null
-//        }
-//        Log.d(">>> ready text", readyText.orEmpty())
+        val readyText = when {
+            isJson && parsingResult != null -> {
+                transformProtobufStringToValues(
+                    cutMediaFromString(
+                        fullString = message.toString(),
+                        mediaBytes = parsingResult.bytes,
+                        placeholder = parsingResult.contentType.name,
+                    )
+                )
+            }
+
+            isJson -> textRepresentation
+            else -> null
+        }
+//        logBytesAsHex(originalBytes)
 
         return AnalysisResult(
-            contentType = parsingResult?.contentType ?: GiraffeContentType.Unknown,
-            textContent = textRepresentation.take(1000),
-            null,
+            contentType = parsingResult?.contentType
+                ?: if (isJson) GiraffeContentType.Json else GiraffeContentType.Unknown,
+            textContent = readyText ?: textRepresentation.take(1000),
+            filePath = parsingResult?.filePath,
         )
     }
 
@@ -139,65 +132,58 @@ class GiraffeMessageAnalyzer(
         return jsonObject.toString(2)
     }
 
-    fun replaceBinary(
-        text: String,
-        bytes: ByteArray,
-        replacement: String = ""
-    ): String {
-        var start = -1
-        var byteIndex = 0
-        var pos = 0
-
-        while (pos < text.length) {
-            val current = pos
-            val decoded = decodeByte(text, pos)
-
-            if (decoded.first == bytes[byteIndex]) {
-                if (byteIndex == 0) start = current
-
-                byteIndex++
-
-                if (byteIndex == bytes.size) {
-                    return text.substring(0, start) +
-                            replacement +
-                            text.substring(decoded.second)
+    fun escapeLikeProtobuf(bytes: ByteArray): String {
+        val sb = StringBuilder()
+        for (b in bytes) {
+            val v = b.toInt() and 0xFF
+            when (v) {
+                0x0A -> sb.append("\\n")
+                0x0D -> sb.append("\\r")
+                0x09 -> sb.append("\\t")
+                0x22 -> sb.append("\\\"")
+                0x27 -> sb.append("\\'")
+                0x5C -> sb.append("\\\\")
+                else -> if (v in 0x20..0x7E) {
+                    sb.append(v.toChar())
+                } else {
+                    sb.append('\\')
+                    sb.append(String.format("%03o", v))
                 }
-            } else {
-                byteIndex = 0
-                start = -1
             }
-
-            pos = decoded.second
         }
-
-        return text
+        return sb.toString()
     }
 
-    fun decodeByte(text: String, pos: Int): Pair<Byte, Int> {
-        if (text[pos] != '\\') {
-            return text[pos].code.toByte() to pos + 1
+    fun cutMediaFromString(
+        fullString: String,
+        mediaBytes: ByteArray,
+        placeholder: String,
+        edgeSize: Int = 4
+    ): String {
+        if (mediaBytes.size < edgeSize * 2) {
+            return fullString
         }
 
-        val next = text[pos + 1]
+        val startBytes = mediaBytes.copyOfRange(0, edgeSize)
+        val endBytes = mediaBytes.copyOfRange(mediaBytes.size - edgeSize, mediaBytes.size)
 
-        return when {
-            next in '0'..'7' -> {
-                var end = pos + 1
-                while (end < text.length &&
-                    end < pos + 4 &&
-                    text[end] in '0'..'7'
-                ) end++
+        val startEscaped = escapeLikeProtobuf(startBytes)
+        val endEscaped = escapeLikeProtobuf(endBytes)
 
-                text.substring(pos + 1, end).toInt(8).toByte() to end
-            }
-
-            next == 'n' -> '\n'.code.toByte() to pos + 2
-            next == 'r' -> '\r'.code.toByte() to pos + 2
-            next == 't' -> '\t'.code.toByte() to pos + 2
-            next == '\\' -> '\\'.code.toByte() to pos + 2
-            next == '"' -> '"'.code.toByte() to pos + 2
-
-            else -> next.code.toByte() to pos + 2
+        val startIdx = fullString.indexOf(startEscaped)
+        if (startIdx == -1) {
+            Log.d(">>> cutMedia", "start pattern not found: $startEscaped")
+            return fullString
         }
+
+        val endIdx = fullString.lastIndexOf(endEscaped)
+        if (endIdx == -1 || endIdx < startIdx) {
+            Log.d(">>> cutMedia", "end pattern not found or before start: $endEscaped")
+            return fullString
+        }
+
+        val cutTo = endIdx + endEscaped.length
+
+        return fullString.substring(0, startIdx) + placeholder + fullString.substring(cutTo)
     }
 }
