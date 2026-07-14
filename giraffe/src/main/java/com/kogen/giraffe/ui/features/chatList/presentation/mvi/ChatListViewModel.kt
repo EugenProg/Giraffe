@@ -32,15 +32,15 @@ internal class ChatListViewModel(
                 updateState {
                     it.copy(showDeleteDialog = false)
                 }
-                viewModelScope.launch {
-                    clearChatListUseCase.execute()
-                }
+                wrappedRequest(
+                    call = { clearChatListUseCase.execute() },
+                )
             }
 
             is ChatListAction.DeleteChat -> {
-                viewModelScope.launch {
-                    deleteChatByIdUseCase.execute(action.chatId)
-                }
+                wrappedRequest(
+                    call = { deleteChatByIdUseCase.execute(action.chatId) },
+                )
             }
 
             is ChatListAction.ShowDeleteDialog -> {

@@ -6,14 +6,17 @@ import kotlinx.coroutines.flow.Flow
 import kz.evko.kogen_di.annotations.KoGenComponent
 
 internal interface LoadChatDetailsUseCase {
-    suspend fun execute(id: String): Flow<GiraffeChat?>
+    val chatDetails: Flow<GiraffeChat?>
+    suspend fun execute(id: String)
 }
 
 @KoGenComponent
 internal class LoadChatDetailsUseCaseImpl(
     val service: ChatDetailsService,
 ) : LoadChatDetailsUseCase {
-    override suspend fun execute(id: String): Flow<GiraffeChat?> {
-        return service.loadChatDetails(id)
+    override val chatDetails: Flow<GiraffeChat?> = service.chatDetails
+
+    override suspend fun execute(id: String) {
+         service.loadChatDetails(id)
     }
 }

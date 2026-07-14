@@ -6,7 +6,6 @@ import com.google.protobuf.MessageLite
 import com.kogen.giraffe.analizer.parsers.ContentParser
 import com.kogen.giraffe.analizer.parsers.GiraffeAudioParser
 import com.kogen.giraffe.analizer.parsers.GiraffeImageParser
-import com.kogen.giraffe.analizer.parsers.GiraffeJsonParser
 import com.kogen.giraffe.analizer.parsers.GiraffeUnknownBinaryParser
 import com.kogen.giraffe.analizer.parsers.GiraffeVideoParser
 import com.kogen.giraffe.analizer.parsers.ParserResult
@@ -20,26 +19,13 @@ class GiraffeMessageAnalyzer(
     private val context: Context,
 ) {
 
-    companion object {
-        private val customParsers = mutableListOf<ContentParser>()
-
-        fun registerCustomParser(parser: ContentParser) {
-            customParsers.add(parser)
-        }
-    }
-
     private val allParsers: List<ContentParser>
-        get() {
-            val mediaParsers = customParsers + listOf(
-                GiraffeImageParser(),
-                GiraffeAudioParser(),
-                GiraffeVideoParser(),
-                GiraffeUnknownBinaryParser(),
-            )
-            val jsonParser = GiraffeJsonParser(mediaParsers)
-
-            return listOf(jsonParser) + mediaParsers
-        }
+        get() = listOf(
+            GiraffeImageParser(),
+            GiraffeAudioParser(),
+            GiraffeVideoParser(),
+            GiraffeUnknownBinaryParser(),
+        )
 
 
     fun analyze(message: Any): AnalysisResult {
@@ -75,7 +61,6 @@ class GiraffeMessageAnalyzer(
             isJson -> textRepresentation
             else -> null
         }
-//        logBytesAsHex(originalBytes)
 
         return AnalysisResult(
             contentType = parsingResult?.contentType

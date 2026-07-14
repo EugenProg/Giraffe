@@ -1,7 +1,5 @@
 package com.kogen.giraffe.ui.features.chatDetails.presentation.screens
 
-import android.graphics.BitmapFactory
-import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
@@ -19,6 +17,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -266,9 +265,13 @@ private fun ServerMessageView(message: GiraffeMessage) {
             if (message.contentType == GiraffeContentType.Image &&
                 message.filePath.isNullOrBlank().not()
             ) {
+                Spacer(Modifier.height(8.dp))
 
                 AsyncImage(
-                    modifier = Modifier.size(200.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .wrapContentWidth()
+                        .clip(RoundedCornerShape(14.dp)),
                     model = File(message.filePath),
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
@@ -323,9 +326,6 @@ private fun ClientMessageView(message: GiraffeMessage) {
                     model = File(message.filePath),
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
-                    onState = {
-                        Log.d(">>>", "state: it")
-                    }
                 )
             }
         }
