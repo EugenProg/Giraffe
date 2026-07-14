@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -30,6 +31,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
@@ -46,6 +48,7 @@ import com.kogen.giraffe.ui.common.main.BackgroundColor
 import com.kogen.giraffe.ui.common.main.PrimaryColor
 import com.kogen.giraffe.ui.common.main.TextPrimaryColor
 import com.kogen.giraffe.ui.common.presentation.NoContentView
+import com.kogen.giraffe.ui.common.presentation.extensions.copyToClipboard
 import com.kogen.giraffe.ui.common.presentation.extensions.timestampToDateTime
 import com.kogen.giraffe.ui.common.presentation.extensions.timestampToTime
 import com.kogen.giraffe.ui.features.chatDetails.presentation.mvi.ChatDetailsAction
@@ -64,55 +67,49 @@ internal fun ChatDetailsScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .statusBarsPadding()
-                    .height(56.dp),
             ) {
-                Row(
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .weight(1f)
-                        .padding(end = 16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
+                        .height(56.dp),
                 ) {
-                    Icon(
+                    Row(
                         modifier = Modifier
-                            .size(36.dp)
-                            .clip(RoundedCornerShape(6.dp))
-                            .clickable {
-                                action(ChatDetailsAction.NavigateBack)
-                            }
-                            .padding(6.dp),
-                        painter = painterResource(R.drawable.ic_arrow_left),
-                        contentDescription = null,
-                        tint = PrimaryColor,
-                    )
-                    Text(
-                        modifier = Modifier.weight(1f),
-                        text = state.chat?.url.orEmpty(),
-                        style = TextStyle(
-                            fontSize = 16.sp,
-                        ),
-                        color = TextPrimaryColor,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
+                            .fillMaxWidth()
+                            .weight(1f)
+                            .padding(end = 16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Icon(
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(RoundedCornerShape(6.dp))
+                                .clickable {
+                                    action(ChatDetailsAction.NavigateBack)
+                                }
+                                .padding(6.dp),
+                            painter = painterResource(R.drawable.ic_arrow_left),
+                            contentDescription = null,
+                            tint = PrimaryColor,
+                        )
+                        Text(
+                            modifier = Modifier.weight(1f),
+                            text = state.chat?.url.orEmpty(),
+                            style = TextStyle(
+                                fontSize = 16.sp,
+                            ),
+                            color = TextPrimaryColor,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(PrimaryColor)
+                            .height(1.dp),
                     )
                 }
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(PrimaryColor)
-                        .height(1.dp),
-                )
-            }
-        }
-    ) {
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(it),
-            contentPadding = PaddingValues(bottom = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            item {
                 RequestDetailsView(
                     chat = state.chat,
                     isVisible = state.showRequestDetails,
@@ -124,6 +121,15 @@ internal fun ChatDetailsScreen(
                     }
                 )
             }
+        }
+    ) {
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(it),
+            contentPadding = PaddingValues(bottom = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
             if (state.chat?.messages.isNullOrEmpty().not()) {
                 items(
                     items = state.chat.messages,
@@ -233,6 +239,7 @@ private fun RequestDetailsView(
 
 @Composable
 private fun ServerMessageView(message: GiraffeMessage) {
+    val context = LocalContext.current
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -273,17 +280,35 @@ private fun ServerMessageView(message: GiraffeMessage) {
             }
         }
         Spacer(Modifier.height(2.dp))
-        Text(
+        Row(
             modifier = Modifier.padding(start = 4.dp),
-            text = message.timestamp.timestampToTime(),
-            style = TextStyle(fontSize = 12.sp),
-            color = PrimaryColor
-        )
+        ) {
+            if (message.textContent.isNullOrBlank().not()) {
+                Icon(
+                    modifier = Modifier
+                        .size(14.dp)
+                        .clickable {
+                            message.textContent.copyToClipboard(context)
+                        },
+                    painter = painterResource(R.drawable.ic_copy),
+                    contentDescription = null,
+                    tint = TextPrimaryColor,
+                )
+                Spacer(Modifier.width(4.dp))
+            }
+            Text(
+                text = message.timestamp.timestampToTime(),
+                style = TextStyle(fontSize = 12.sp),
+                color = PrimaryColor
+            )
+        }
+
     }
 }
 
 @Composable
 private fun ClientMessageView(message: GiraffeMessage) {
+    val context = LocalContext.current
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -324,11 +349,27 @@ private fun ClientMessageView(message: GiraffeMessage) {
             }
         }
         Spacer(Modifier.height(2.dp))
-        Text(
+        Row(
             modifier = Modifier.padding(end = 4.dp),
-            text = message.timestamp.timestampToTime(),
-            style = TextStyle(fontSize = 12.sp),
-            color = PrimaryColor
-        )
+        ) {
+            Text(
+                text = message.timestamp.timestampToTime(),
+                style = TextStyle(fontSize = 12.sp),
+                color = PrimaryColor
+            )
+            if (message.textContent.isNullOrBlank().not()) {
+                Spacer(Modifier.width(4.dp))
+                Icon(
+                    modifier = Modifier
+                        .size(14.dp)
+                        .clickable {
+                            message.textContent.copyToClipboard(context)
+                        },
+                    painter = painterResource(R.drawable.ic_copy),
+                    contentDescription = null,
+                    tint = TextPrimaryColor,
+                )
+            }
+        }
     }
 }
