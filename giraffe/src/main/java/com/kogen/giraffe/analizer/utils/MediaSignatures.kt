@@ -112,6 +112,18 @@ internal object MediaSignatures {
 
         return if (pos > ftypIndex) pos else -1
     }
+
+    fun findLastEndOfMedia(bytes: ByteArray, start: Int, signatureEnd: ByteArray): Int {
+        var result = -1
+        var from = start
+        while (true) {
+            val idx = indexOf(bytes, signatureEnd, from)
+            if (idx == -1) break
+            result = idx + signatureEnd.size
+            from = idx + 1
+        }
+        return result
+    }
 }
 
 fun saveMediaToCache(

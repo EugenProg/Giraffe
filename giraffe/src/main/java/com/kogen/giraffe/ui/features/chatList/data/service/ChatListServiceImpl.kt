@@ -7,6 +7,7 @@ import com.kogen.giraffe.ui.features.chatList.domain.service.ChatListService
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kz.evko.kogen_di.annotations.KoGenComponent
+import java.io.File
 
 @KoGenComponent(true)
 internal class ChatListServiceImpl(
@@ -20,11 +21,14 @@ internal class ChatListServiceImpl(
         }
     }
 
-    override suspend fun clearChatList() {
-        dao.clearAllChats()
-    }
-
-    override suspend fun deleteChatById(chatId: String) {
-        dao.deleteChatById(chatId)
+    override suspend fun deleteChats(chatIds: List<String>) {
+        val filePaths = dao.getFilePathsByChatIds(chatIds)
+        dao.deleteChatsByIds(chatIds)
+        try {
+            filePaths.forEach { path ->
+                File(path).delete()
+            }
+        } catch (_: Exception) {
+        }
     }
 }

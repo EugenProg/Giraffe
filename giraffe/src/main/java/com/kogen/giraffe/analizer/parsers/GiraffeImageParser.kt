@@ -22,7 +22,7 @@ internal class GiraffeImageParser : ContentParser {
                 MediaSignatures.PNG_END
             )
 
-            Format.JPEG -> MediaSignatures.findEndOfMedia(
+            Format.JPEG -> MediaSignatures.findLastEndOfMedia(
                 originalBytes,
                 match.start,
                 MediaSignatures.JPEG_END

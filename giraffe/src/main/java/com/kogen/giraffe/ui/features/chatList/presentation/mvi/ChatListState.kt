@@ -5,5 +5,5 @@ import com.kogen.giraffe.ui.common.mvi.UiState
 
 internal data class ChatListState(
     val chatList: List<GiraffeChat> = emptyList(),
-    val showDeleteDialog: Boolean = false,
+    val selectedIds: Set<String> = emptySet(),
 ) : UiState

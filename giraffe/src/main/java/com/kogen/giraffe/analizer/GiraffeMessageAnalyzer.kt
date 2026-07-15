@@ -14,6 +14,8 @@ import kz.evko.kogen_di.annotations.KoGenComponent
 import org.json.JSONArray
 import org.json.JSONObject
 
+private const val MAX_DB_TEXT_LENGTH = 500_000
+
 @KoGenComponent(true)
 class GiraffeMessageAnalyzer(
     private val context: Context,
@@ -65,9 +67,17 @@ class GiraffeMessageAnalyzer(
         return AnalysisResult(
             contentType = parsingResult?.contentType
                 ?: if (isJson) GiraffeContentType.Json else GiraffeContentType.Unknown,
-            textContent = readyText ?: textRepresentation.take(1000),
+            textContent = truncateForDb(readyText) ?: textRepresentation.take(1000),
             filePath = parsingResult?.filePath,
         )
+    }
+
+    fun truncateForDb(text: String?, maxLength: Int = MAX_DB_TEXT_LENGTH): String? {
+        return when {
+            text == null -> null
+            text.length <= maxLength -> text
+            else -> text.substring(0, maxLength)
+        }
     }
 
     private fun transformProtobufStringToValues(message: Any): String {

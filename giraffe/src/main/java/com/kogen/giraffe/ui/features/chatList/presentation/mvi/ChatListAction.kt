@@ -2,10 +2,10 @@ package com.kogen.giraffe.ui.features.chatList.presentation.mvi
 
 import com.kogen.giraffe.ui.common.mvi.UiAction
 
-sealed interface ChatListAction: UiAction {
-    data object ClearHistory: ChatListAction
-    data class DeleteChat(val chatId: String): ChatListAction
-    data object ShowDeleteDialog: ChatListAction
-    data object HideDeleteDialog: ChatListAction
-    data class ShowChatDetails(val id: String): ChatListAction
+sealed interface ChatListAction : UiAction {
+    data object DeleteChats : ChatListAction
+    data class SelectChat(val chatId: String, val isSelected: Boolean) : ChatListAction
+    data object SelectAllChats : ChatListAction
+    data object UnSelectAllChats : ChatListAction
+    data class ShowChatDetails(val id: String) : ChatListAction
 }
