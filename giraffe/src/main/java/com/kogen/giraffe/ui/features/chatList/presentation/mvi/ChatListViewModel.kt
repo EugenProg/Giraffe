@@ -1,9 +1,9 @@
 package com.kogen.giraffe.ui.features.chatList.presentation.mvi
 
 import androidx.lifecycle.viewModelScope
+import com.kogen.giraffe.ui.common.domain.models.GiraffeChatStatus
 import com.kogen.giraffe.ui.common.mvi.BaseMviViewModel
-import com.kogen.giraffe.ui.features.chatList.domain.useCases.ClearChatListUseCase
-import com.kogen.giraffe.ui.features.chatList.domain.useCases.DeleteChatByIdUseCase
+import com.kogen.giraffe.ui.features.chatList.domain.useCases.DeleteChatsByIdUseCase
 import com.kogen.giraffe.ui.features.chatList.domain.useCases.LoadChatListUseCase
 import kotlinx.coroutines.launch
 import kz.evko.kogen_di.annotations.KoGenViewModel
@@ -11,8 +11,7 @@ import kz.evko.kogen_di.annotations.KoGenViewModel
 @KoGenViewModel
 internal class ChatListViewModel(
     val loadChatListUseCase: LoadChatListUseCase,
-    val clearChatListUseCase: ClearChatListUseCase,
-    val deleteChatByIdUseCase: DeleteChatByIdUseCase,
+    val deleteChatsByIdUseCase: DeleteChatsByIdUseCase,
 ) : BaseMviViewModel<ChatListAction, ChatListState, ChatListEffect>(
     ChatListState()
 ) {
@@ -28,30 +27,38 @@ internal class ChatListViewModel(
 
     override fun handleAction(action: ChatListAction) {
         when (action) {
-            is ChatListAction.ClearHistory -> {
+            is ChatListAction.DeleteChats -> {
+                wrappedRequest(
+                    call = {
+                        deleteChatsByIdUseCase.execute(state.value.selectedIds.toList())
+                    },
+                )
+            }
+
+            is ChatListAction.SelectChat -> {
                 updateState {
-                    it.copy(showDeleteDialog = false)
-                }
-                viewModelScope.launch {
-                    clearChatListUseCase.execute()
+                    val selectedIds = if (action.isSelected) {
+                        it.selectedIds + action.chatId
+                    } else {
+                        it.selectedIds - action.chatId
+                    }
+                    it.copy(selectedIds = selectedIds)
                 }
             }
 
-            is ChatListAction.DeleteChat -> {
-                viewModelScope.launch {
-                    deleteChatByIdUseCase.execute(action.chatId)
+            is ChatListAction.SelectAllChats -> {
+                updateState {
+                    it.copy(selectedIds = it.chatList.filter { chat ->
+                        chat.status != GiraffeChatStatus.InProgress
+                    }.map { chat ->
+                        chat.id
+                    }.toSet())
                 }
             }
 
-            is ChatListAction.ShowDeleteDialog -> {
+            is ChatListAction.UnSelectAllChats -> {
                 updateState {
-                    it.copy(showDeleteDialog = true)
-                }
-            }
-
-            is ChatListAction.HideDeleteDialog -> {
-                updateState {
-                    it.copy(showDeleteDialog = false)
+                    it.copy(selectedIds = emptySet())
                 }
             }
 

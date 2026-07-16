@@ -13,16 +13,23 @@ internal class ChatDetailsViewModel(
     BaseMviViewModel<ChatDetailsAction, ChatDetailsState, ChatDetailsEffect>(
         ChatDetailsState()
     ) {
+
+    init {
+        viewModelScope.launch {
+            loadChatDetailsUseCase.chatDetails.collect { chat ->
+                updateState {
+                    it.copy(chat = chat)
+                }
+            }
+        }
+    }
+
     override fun handleAction(action: ChatDetailsAction) {
         when (action) {
             is ChatDetailsAction.LoadChatDetails -> {
-                viewModelScope.launch {
-                    loadChatDetailsUseCase.execute(action.id).collect { chat ->
-                        updateState {
-                            it.copy(chat = chat)
-                        }
-                    }
-                }
+                wrappedRequest(
+                    call = { loadChatDetailsUseCase.execute(action.id) },
+                )
             }
 
             is ChatDetailsAction.NavigateBack -> {

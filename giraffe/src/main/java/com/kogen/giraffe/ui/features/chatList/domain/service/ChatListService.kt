@@ -5,6 +5,5 @@ import kotlinx.coroutines.flow.Flow
 
 internal interface ChatListService {
     suspend fun loadChatList(): Flow<List<GiraffeChat>>
-    suspend fun clearChatList()
-    suspend fun deleteChatById(chatId: String)
+    suspend fun deleteChats(chatIds: List<String>)
 }

@@ -52,8 +52,8 @@ abstract class BaseMviViewModel<A : UiAction, S : UiState, E : UiEffect>(
 
     protected fun <T> wrappedRequest(
         call: suspend () -> T,
-        onSuccess: (T) -> Unit,
-        onError: (Throwable) -> Unit
+        onSuccess: (T) -> Unit = {},
+        onError: (Throwable) -> Unit = {},
     ) {
         viewModelScope.launch(Dispatchers.IO) {
             try {

@@ -31,5 +31,6 @@ internal fun provideDB(context: Context): GiraffeDb = Room.databaseBuilder(
     context.applicationContext,
     GiraffeDb::class.java,
     "giraffe_traffic_logs.db"
-).fallbackToDestructiveMigration(true)//TODO: delete to prod release
+).enableMultiInstanceInvalidation()
+    .fallbackToDestructiveMigration(true)//TODO: delete to prod release
     .build()

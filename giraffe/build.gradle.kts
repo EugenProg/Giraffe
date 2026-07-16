@@ -38,6 +38,8 @@ dependencies {
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.core)
     implementation(libs.grpc.stub)
+    implementation(libs.grpc.protobuf)
+
     implementation(libs.kogen.di)
     ksp(libs.kogen.di)
     implementation(libs.androidx.navigation)

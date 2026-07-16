@@ -62,11 +62,11 @@ interface GiraffeLogDao {
         targetStatus: GiraffeChatStatus = GiraffeChatStatus.Interrupted,
     )
 
-    @Query("DELETE FROM giraffe_chat WHERE chatId = :chatId")
-    suspend fun deleteChatById(chatId: String)
+    @Query("SELECT filePath FROM giraffe_messages WHERE chatId IN (:chatIds) AND filePath IS NOT NULL")
+    suspend fun getFilePathsByChatIds(chatIds: List<String>): List<String>
 
-    @Query("DELETE FROM giraffe_chat")
-    suspend fun clearAllChats()
+    @Query("DELETE FROM giraffe_chat WHERE chatId IN (:chatIds)")
+    suspend fun deleteChatsByIds(chatIds: List<String>)
 }
 
 @KoGenBean(true)

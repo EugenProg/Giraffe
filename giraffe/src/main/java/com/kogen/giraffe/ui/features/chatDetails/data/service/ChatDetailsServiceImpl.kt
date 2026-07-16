@@ -4,17 +4,43 @@ import com.kogen.giraffe.db.dao.GiraffeLogDao
 import com.kogen.giraffe.ui.common.domain.models.GiraffeChat
 import com.kogen.giraffe.ui.common.domain.models.toDomain
 import com.kogen.giraffe.ui.features.chatDetails.domain.service.ChatDetailsService
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kz.evko.kogen_di.annotations.KoGenComponent
+import kotlin.coroutines.CoroutineContext
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @KoGenComponent(true)
 internal class ChatDetailsServiceImpl(
     val dao: GiraffeLogDao,
-) : ChatDetailsService {
-    override suspend fun loadChatDetails(id: String): Flow<GiraffeChat?> {
-        return dao.getChatDetailsById(id).map {
-            it?.toDomain()
-        }
+) : ChatDetailsService, CoroutineScope {
+    override val coroutineContext: CoroutineContext
+        get() = Job() + Dispatchers.IO
+    private val _chatDetails: MutableStateFlow<GiraffeChat?> = MutableStateFlow(null)
+    override val chatDetails: Flow<GiraffeChat?> = _chatDetails
+    private val currentChatId = MutableStateFlow<String?>(null)
+
+    init {
+        currentChatId
+            .filterNotNull()
+            .flatMapLatest { id -> dao.getChatDetailsById(id) }
+            .map { it?.toDomain() }
+            .onEach {
+                _chatDetails.value = it
+            }
+            .launchIn(this)
+    }
+
+    override suspend fun loadChatDetails(id: String) {
+        currentChatId.value = id
     }
 }
