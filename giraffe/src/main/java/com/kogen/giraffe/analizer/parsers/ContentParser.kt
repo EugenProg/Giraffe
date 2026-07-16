@@ -4,5 +4,5 @@ import android.content.Context
 import com.kogen.giraffe.analizer.AnalysisResult
 
 interface ContentParser {
-    fun parse(message: Any, context: Context): AnalysisResult?
+    fun parse(originalBytes: ByteArray, context: Context): ParserResult?
 }

@@ -145,16 +145,20 @@ class GiraffeInterceptor(val context: Context) : ClientInterceptor {
 
     private fun saveMessage(chatId: String, isIncoming: Boolean, message: Any) {
         scope.launch {
-            val analysis = analyzer.analyze(message)
-            val dbMessage = GiraffeMessageEntity(
-                chatId = chatId,
-                isIncoming = isIncoming,
-                contentType = analysis.contentType,
-                textContent = analysis.textContent,
-                filePath = analysis.filePath,
-                timestamp = System.currentTimeMillis(),
-            )
-            giraffeLogDao.insertMessage(dbMessage)
+            try {
+                val analysis = analyzer.analyze(message)
+                val dbMessage = GiraffeMessageEntity(
+                    chatId = chatId,
+                    isIncoming = isIncoming,
+                    contentType = analysis.contentType,
+                    textContent = analysis.textContent,
+                    filePath = analysis.filePath,
+                    timestamp = System.currentTimeMillis(),
+                )
+                giraffeLogDao.insertMessage(dbMessage)
+            } catch (_: Exception) {
+
+            }
         }
     }
 

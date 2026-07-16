@@ -1,57 +1,83 @@
 package com.kogen.giraffe.analizer
 
 import android.content.Context
+import android.util.Log
+import com.google.protobuf.MessageLite
 import com.kogen.giraffe.analizer.parsers.ContentParser
 import com.kogen.giraffe.analizer.parsers.GiraffeAudioParser
 import com.kogen.giraffe.analizer.parsers.GiraffeImageParser
-import com.kogen.giraffe.analizer.parsers.GiraffeJsonParser
 import com.kogen.giraffe.analizer.parsers.GiraffeUnknownBinaryParser
 import com.kogen.giraffe.analizer.parsers.GiraffeVideoParser
+import com.kogen.giraffe.analizer.parsers.ParserResult
 import com.kogen.giraffe.ui.common.domain.models.GiraffeContentType
 import kz.evko.kogen_di.annotations.KoGenComponent
 import org.json.JSONArray
 import org.json.JSONObject
+
+private const val MAX_DB_TEXT_LENGTH = 500_000
 
 @KoGenComponent(true)
 class GiraffeMessageAnalyzer(
     private val context: Context,
 ) {
 
-    companion object {
-        private val customParsers = mutableListOf<ContentParser>()
-
-        fun registerCustomParser(parser: ContentParser) {
-            customParsers.add(parser)
-        }
-    }
-
     private val allParsers: List<ContentParser>
-        get() {
-            val mediaParsers = customParsers + listOf(
-                GiraffeImageParser(),
-                GiraffeAudioParser(),
-                GiraffeVideoParser(),
-                GiraffeUnknownBinaryParser(),
-            )
-            val jsonParser = GiraffeJsonParser(mediaParsers)
-
-            return listOf(jsonParser) + mediaParsers
-        }
+        get() = listOf(
+            GiraffeImageParser(),
+            GiraffeAudioParser(),
+            GiraffeVideoParser(),
+            GiraffeUnknownBinaryParser(),
+        )
 
 
     fun analyze(message: Any): AnalysisResult {
-        val transformedMessage = transformProtobufStringToValues(message)
+        val originalBytes =
+            (message as? MessageLite)?.toByteArray() ?: message.toString().toByteArray()
+        val textRepresentation = transformProtobufStringToValues(message)
+        var parsingResult: ParserResult? = null
 
         for (parser in allParsers) {
-            val result = parser.parse(transformedMessage, context)
-            if (result != null) return result
+            parser.parse(originalBytes, context)?.let {
+                parsingResult = it
+                break
+            }
+        }
+
+
+        val trimmedStr = textRepresentation.trim()
+
+        val isJson = ((trimmedStr.startsWith("{") && trimmedStr.endsWith("}")) ||
+                (trimmedStr.startsWith("[") && trimmedStr.endsWith("]")))
+
+        val readyText = when {
+            isJson && parsingResult != null -> {
+                transformProtobufStringToValues(
+                    cutMediaFromString(
+                        fullString = message.toString(),
+                        mediaBytes = parsingResult.bytes,
+                        placeholder = parsingResult.contentType.name,
+                    )
+                )
+            }
+
+            isJson -> textRepresentation
+            else -> null
         }
 
         return AnalysisResult(
-            contentType = GiraffeContentType.Unknown,
-            textContent = transformedMessage.take(1000),
-            filePath = null
+            contentType = parsingResult?.contentType
+                ?: if (isJson) GiraffeContentType.Json else GiraffeContentType.Unknown,
+            textContent = truncateForDb(readyText) ?: textRepresentation.take(1000),
+            filePath = parsingResult?.filePath,
         )
+    }
+
+    fun truncateForDb(text: String?, maxLength: Int = MAX_DB_TEXT_LENGTH): String? {
+        return when {
+            text == null -> null
+            text.length <= maxLength -> text
+            else -> text.substring(0, maxLength)
+        }
     }
 
     private fun transformProtobufStringToValues(message: Any): String {
@@ -99,5 +125,60 @@ class GiraffeMessageAnalyzer(
         }
 
         return jsonObject.toString(2)
+    }
+
+    fun escapeLikeProtobuf(bytes: ByteArray): String {
+        val sb = StringBuilder()
+        for (b in bytes) {
+            val v = b.toInt() and 0xFF
+            when (v) {
+                0x0A -> sb.append("\\n")
+                0x0D -> sb.append("\\r")
+                0x09 -> sb.append("\\t")
+                0x22 -> sb.append("\\\"")
+                0x27 -> sb.append("\\'")
+                0x5C -> sb.append("\\\\")
+                else -> if (v in 0x20..0x7E) {
+                    sb.append(v.toChar())
+                } else {
+                    sb.append('\\')
+                    sb.append(String.format("%03o", v))
+                }
+            }
+        }
+        return sb.toString()
+    }
+
+    fun cutMediaFromString(
+        fullString: String,
+        mediaBytes: ByteArray,
+        placeholder: String,
+        edgeSize: Int = 4
+    ): String {
+        if (mediaBytes.size < edgeSize * 2) {
+            return fullString
+        }
+
+        val startBytes = mediaBytes.copyOfRange(0, edgeSize)
+        val endBytes = mediaBytes.copyOfRange(mediaBytes.size - edgeSize, mediaBytes.size)
+
+        val startEscaped = escapeLikeProtobuf(startBytes)
+        val endEscaped = escapeLikeProtobuf(endBytes)
+
+        val startIdx = fullString.indexOf(startEscaped)
+        if (startIdx == -1) {
+            Log.d(">>> cutMedia", "start pattern not found: $startEscaped")
+            return fullString
+        }
+
+        val endIdx = fullString.lastIndexOf(endEscaped)
+        if (endIdx == -1 || endIdx < startIdx) {
+            Log.d(">>> cutMedia", "end pattern not found or before start: $endEscaped")
+            return fullString
+        }
+
+        val cutTo = endIdx + endEscaped.length
+
+        return fullString.substring(0, startIdx) + placeholder + fullString.substring(cutTo)
     }
 }

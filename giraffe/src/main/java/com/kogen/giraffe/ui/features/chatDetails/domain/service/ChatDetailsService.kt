@@ -4,5 +4,6 @@ import com.kogen.giraffe.ui.common.domain.models.GiraffeChat
 import kotlinx.coroutines.flow.Flow
 
 internal interface ChatDetailsService {
-    suspend fun loadChatDetails(id: String): Flow<GiraffeChat?>
+    val chatDetails: Flow<GiraffeChat?>
+    suspend fun loadChatDetails(id: String)
 }

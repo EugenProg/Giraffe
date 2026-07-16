@@ -29,7 +29,9 @@
       "Bash(./gradlew :app:kspDebugKotlin)",
       "Bash(unzip *)",
       "Bash(./gradlew :app:assembleDebug)",
-      "Bash(./gradlew clean *)"
+      "Bash(./gradlew clean *)",
+      "Bash(./gradlew :giraffe:compileDebugKotlin -q)",
+      "Bash(./gradlew :app:compileDebugKotlin -q)"
     ]
   }
 }

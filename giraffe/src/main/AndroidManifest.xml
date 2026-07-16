@@ -14,6 +14,5 @@
             android:process=":giraffe_process"
             android:taskAffinity="com.kogen.giraffe.task"
             android:theme="@style/Theme.AppCompat.NoActionBar" />
-
     </application>
 </manifest>
