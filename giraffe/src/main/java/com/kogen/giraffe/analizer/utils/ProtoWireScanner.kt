@@ -1,6 +1,10 @@
 package com.kogen.giraffe.analizer.utils
 
 class ProtoWireScanner {
+    companion object {
+        private const val MIN_MESSAGE_BYTE_COVERAGE = 0.9
+    }
+
     fun scan(data: ByteArray): List<ProtoField> {
         val fields = mutableListOf<ProtoField>()
         var pos = 0
@@ -40,6 +44,59 @@ class ProtoWireScanner {
         }
 
         return fields
+    }
+
+    /**
+     * Returns length-delimited fields that are NOT themselves fully-formed nested messages,
+     * descending into any depth of oneof/message wrapping to find the true opaque leaf bytes
+     * (e.g. the raw content of a `bytes data` field buried inside several wrapper messages).
+     * A payload is treated as a nested message (and recursed into) only if scanning it consumes
+     * it in full as valid wire-format fields; otherwise it's reported as a leaf candidate.
+     */
+    fun findBinaryLeaves(data: ByteArray, minSize: Int = 17): List<ByteArray> {
+        val leaves = mutableListOf<ByteArray>()
+        collectLeaves(data, minSize, leaves)
+        return leaves
+    }
+
+    private fun collectLeaves(data: ByteArray, minSize: Int, out: MutableList<ByteArray>) {
+        for (field in scan(data)) {
+            val payload = field.bytes ?: continue
+            if (field.wireType != 2) continue
+            if (MediaSignatures.isLikelyUtf8Text(payload)) continue
+
+            val nested = scan(payload)
+            val consumedAll = nested.isNotEmpty() && nested.last().endOffset == payload.size
+
+            // Protobuf's wire format is loose enough that arbitrary binary (e.g. raw audio) can
+            // "fully parse" as a sequence of tiny wireType=0/1/5 fields purely by chance — those
+            // carry no bytes and get silently dropped, which would otherwise shred most of a real
+            // media payload down to whatever small wireType=2 fragment happened to survive. Only
+            // trust the nested-message interpretation if real (bytes-carrying) fields account for
+            // nearly all of the payload — a genuine nested message barely wastes any bytes on
+            // framing, while a false-positive reinterpretation of noise loses most of them.
+            val byteFieldCoverage = nested.filter { it.wireType == 2 }
+                .sumOf { it.bytes?.size ?: 0 }
+            val looksLikeRealMessage = consumedAll &&
+                payload.isNotEmpty() &&
+                byteFieldCoverage.toDouble() / payload.size >= MIN_MESSAGE_BYTE_COVERAGE
+
+            if (looksLikeRealMessage) {
+                val nestedLeaves = mutableListOf<ByteArray>()
+                collectLeaves(payload, minSize, nestedLeaves)
+                if (nestedLeaves.isNotEmpty()) {
+                    out.addAll(nestedLeaves)
+                    continue
+                }
+                // Looked like a fully-formed nested message (e.g. a run of zero bytes parses as
+                // valid-but-empty wireType=0 fields), but recursing produced no usable bytes —
+                // fall back to treating the whole payload as an opaque leaf instead of losing it.
+            }
+
+            if (payload.size >= minSize) {
+                out.add(payload)
+            }
+        }
     }
 
     private fun readVariant(data: ByteArray, start: Int): Pair<Long, Int>? {

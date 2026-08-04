@@ -7,4 +7,6 @@ sealed interface ChatDetailsAction : UiAction {
     data object NavigateBack : ChatDetailsAction
     data object ShowRequestDetail: ChatDetailsAction
     data object HideRequestDetail: ChatDetailsAction
+    data class PlayAudio(val filePath: String) : ChatDetailsAction
+    data class SeekAudio(val positionMs: Int) : ChatDetailsAction
 }

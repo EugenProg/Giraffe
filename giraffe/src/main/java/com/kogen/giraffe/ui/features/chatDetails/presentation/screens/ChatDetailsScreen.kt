@@ -1,10 +1,14 @@
 package com.kogen.giraffe.ui.features.chatDetails.presentation.screens
 
+import android.annotation.SuppressLint
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -12,6 +16,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -19,6 +24,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -32,6 +38,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -49,14 +57,21 @@ import com.kogen.giraffe.ui.common.main.BGSecondaryColor
 import com.kogen.giraffe.ui.common.main.BackgroundColor
 import com.kogen.giraffe.ui.common.main.PrimaryColor
 import com.kogen.giraffe.ui.common.main.TextPrimaryColor
+import com.kogen.giraffe.ui.common.presentation.AudioPlaybackState
 import com.kogen.giraffe.ui.common.presentation.NoContentView
 import com.kogen.giraffe.ui.common.presentation.extensions.copyToClipboard
 import com.kogen.giraffe.ui.common.presentation.extensions.decodeImageAspectRatio
+import com.kogen.giraffe.ui.common.presentation.extensions.msToDurationText
 import com.kogen.giraffe.ui.common.presentation.extensions.timestampToDateTime
 import com.kogen.giraffe.ui.common.presentation.extensions.timestampToTime
 import com.kogen.giraffe.ui.features.chatDetails.presentation.mvi.ChatDetailsAction
 import com.kogen.giraffe.ui.features.chatDetails.presentation.mvi.ChatDetailsState
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import java.io.File
+import kotlin.random.Random
+
+private const val WAVEFORM_BAR_COUNT = 27
 
 @Composable
 internal fun ChatDetailsScreen(
@@ -139,9 +154,9 @@ internal fun ChatDetailsScreen(
                     key = { message -> message.id }
                 ) { message ->
                     if (message.isIncoming) {
-                        ServerMessageView(message)
+                        ServerMessageView(message, state.audioPlayback, action)
                     } else {
-                        ClientMessageView(message)
+                        ClientMessageView(message, state.audioPlayback, action)
                     }
                 }
             } else {
@@ -240,8 +255,13 @@ private fun RequestDetailsView(
     }
 }
 
+@SuppressLint("UnusedBoxWithConstraintsScope")
 @Composable
-private fun ServerMessageView(message: GiraffeMessage) {
+private fun ServerMessageView(
+    message: GiraffeMessage,
+    audioPlayback: AudioPlaybackState,
+    action: (ChatDetailsAction) -> Unit,
+) {
     val context = LocalContext.current
     Column(
         modifier = Modifier
@@ -271,26 +291,38 @@ private fun ServerMessageView(message: GiraffeMessage) {
                 ),
                 color = TextPrimaryColor,
             )
-            if (message.contentType == GiraffeContentType.Image &&
-                message.filePath.isNullOrBlank().not()
-            ) {
-                Spacer(Modifier.height(8.dp))
+            if (message.filePath.isNullOrBlank().not()) {
+                when(message.contentType) {
+                    GiraffeContentType.Image -> {
+                        Spacer(Modifier.height(8.dp))
 
-                val aspectRatio = remember(message.filePath) {
-                    decodeImageAspectRatio(message.filePath)
-                }
-                BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
-                    val targetHeight = (maxWidth / (aspectRatio ?: 0f)).coerceIn(120.dp, 260.dp)
+                        val aspectRatio = remember(message.filePath) {
+                            decodeImageAspectRatio(message.filePath)
+                        }
+                        BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+                            val targetHeight = (maxWidth / (aspectRatio ?: 0f)).coerceIn(120.dp, 260.dp)
 
-                    AsyncImage(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(targetHeight)
-                            .clip(RoundedCornerShape(14.dp)),
-                        model = File(message.filePath),
-                        contentDescription = null,
-                        contentScale = ContentScale.Crop,
-                    )
+                            AsyncImage(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(targetHeight)
+                                    .clip(RoundedCornerShape(14.dp)),
+                                model = File(message.filePath),
+                                contentDescription = null,
+                                contentScale = ContentScale.Crop,
+                            )
+                        }
+                    }
+
+                    GiraffeContentType.Audio -> {
+                        Spacer(Modifier.height(4.dp))
+                        VoiceMessageView(
+                            filePath = message.filePath,
+                            playback = audioPlayback,
+                            action = action,
+                        )
+                    }
+                    else -> {}
                 }
             }
         }
@@ -321,8 +353,13 @@ private fun ServerMessageView(message: GiraffeMessage) {
     }
 }
 
+@SuppressLint("UnusedBoxWithConstraintsScope")
 @Composable
-private fun ClientMessageView(message: GiraffeMessage) {
+private fun ClientMessageView(
+    message: GiraffeMessage,
+    audioPlayback: AudioPlaybackState,
+    action: (ChatDetailsAction) -> Unit,
+) {
     val context = LocalContext.current
     Column(
         modifier = Modifier
@@ -353,14 +390,39 @@ private fun ClientMessageView(message: GiraffeMessage) {
                 ),
                 color = TextPrimaryColor,
             )
-            if (message.contentType == GiraffeContentType.Image &&
-                message.filePath.isNullOrBlank().not()
-            ) {
-                AsyncImage(
-                    model = File(message.filePath),
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop,
-                )
+            if (message.filePath.isNullOrBlank().not()) {
+                when(message.contentType) {
+                    GiraffeContentType.Image -> {
+                        Spacer(Modifier.height(8.dp))
+
+                        val aspectRatio = remember(message.filePath) {
+                            decodeImageAspectRatio(message.filePath)
+                        }
+                        BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+                            val targetHeight = (maxWidth / (aspectRatio ?: 0f)).coerceIn(120.dp, 260.dp)
+
+                            AsyncImage(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(targetHeight)
+                                    .clip(RoundedCornerShape(14.dp)),
+                                model = File(message.filePath),
+                                contentDescription = null,
+                                contentScale = ContentScale.Crop,
+                            )
+                        }
+                    }
+
+                    GiraffeContentType.Audio -> {
+                        Spacer(Modifier.height(4.dp))
+                        VoiceMessageView(
+                            filePath = message.filePath,
+                            playback = audioPlayback,
+                            action = action,
+                        )
+                    }
+                    else -> {}
+                }
             }
         }
         Spacer(Modifier.height(2.dp))
@@ -385,6 +447,117 @@ private fun ClientMessageView(message: GiraffeMessage) {
                     tint = TextPrimaryColor,
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun VoiceMessageView(
+    filePath: String,
+    playback: AudioPlaybackState,
+    action: (ChatDetailsAction) -> Unit,
+) {
+    val isActive = playback.filePath == filePath
+    val isPlaying = isActive && playback.isPlaying
+    val durationMs = if (isActive) playback.durationMs else 0
+    val positionMs = if (isActive) playback.currentPositionMs else 0
+    val progress = if (durationMs > 0) (positionMs.toFloat() / durationMs).coerceIn(0f, 1f) else 0f
+
+    val barHeights = remember(filePath) {
+        val random = Random(filePath.hashCode())
+        List(WAVEFORM_BAR_COUNT) { random.nextFloat().coerceIn(0.25f, 1f) }
+    }
+
+    Row(
+        modifier = Modifier.widthIn(min = 180.dp, max = 220.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(36.dp)
+                .clip(CircleShape)
+                .background(PrimaryColor)
+                .clickable { action(ChatDetailsAction.PlayAudio(filePath)) },
+            contentAlignment = Alignment.Center,
+        ) {
+            if (isPlaying) {
+                Row(horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+                    repeat(2) {
+                        Box(
+                            modifier = Modifier
+                                .size(width = 3.dp, height = 12.dp)
+                                .clip(RoundedCornerShape(1.dp))
+                                .background(BackgroundColor)
+                        )
+                    }
+                }
+            } else {
+                Canvas(modifier = Modifier.size(width = 12.dp, height = 14.dp)) {
+                    val path = Path().apply {
+                        moveTo(0f, 0f)
+                        lineTo(size.width, size.height / 2f)
+                        lineTo(0f, size.height)
+                        close()
+                    }
+                    drawPath(path, color = BackgroundColor)
+                }
+            }
+        }
+
+        Spacer(Modifier.width(8.dp))
+
+        Column {
+            Row(
+                modifier = Modifier
+                    .height(24.dp)
+                    .widthIn(min = 100.dp, max = 160.dp)
+                    .pointerInput(isActive, durationMs) {
+                        if (isActive && durationMs > 0) {
+                            coroutineScope {
+                                launch {
+                                    detectTapGestures { offset ->
+                                        val fraction = (offset.x / size.width).coerceIn(0f, 1f)
+                                        action(ChatDetailsAction.SeekAudio((fraction * durationMs).toInt()))
+                                    }
+                                }
+                                launch {
+                                    detectDragGestures(
+                                        onDrag = { change, _ ->
+                                            change.consume()
+                                            val fraction = (change.position.x / size.width).coerceIn(0f, 1f)
+                                            action(ChatDetailsAction.SeekAudio((fraction * durationMs).toInt()))
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                    },
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(2.dp),
+            ) {
+                barHeights.forEachIndexed { index, heightFraction ->
+                    val isPlayed = index.toFloat() / barHeights.size < progress
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight(heightFraction)
+                            .clip(RoundedCornerShape(1.dp))
+                            .background(
+                                if (isPlayed) PrimaryColor else TextPrimaryColor.copy(alpha = 0.3f)
+                            )
+                    )
+                }
+            }
+            Spacer(Modifier.height(2.dp))
+            Text(
+                text = if (isActive && durationMs > 0) {
+                    "${positionMs.msToDurationText()} / ${durationMs.msToDurationText()}"
+                } else {
+                    "Voice message"
+                },
+                style = TextStyle(fontSize = 11.sp),
+                color = TextPrimaryColor.copy(alpha = 0.6f),
+            )
         }
     }
 }

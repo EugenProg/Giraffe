@@ -2,15 +2,30 @@ plugins {
     id("com.android.library")
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
+    id("maven-publish")
 }
+
+group = "com.kogen.giraffe"
+version = "0.1.0-SNAPSHOT"
 
 android {
     namespace = "com.kogen.giraffe"
-    compileSdk = 37
+    compileSdk = 36
 
     defaultConfig {
-        minSdk = 28
+        minSdk = 26
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        buildConfigField("String", "GIRAFFE_VERSION", "\"${project.version}\"")
+    }
+
+    buildFeatures {
+        buildConfig = true
+    }
+
+    publishing {
+        singleVariant("release") {
+            withSourcesJar()
+        }
     }
 
     buildTypes {
@@ -23,14 +38,6 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
-    }
-    sourceSets {
-        getByName("debug") {
-            java.directories.add("build/generated/ksp/debug/kotlin")
-        }
-        getByName("release") {
-            java.directories.add("build/generated/ksp/release/kotlin")
-        }
     }
 }
 
@@ -68,4 +75,17 @@ ksp {
     arg("includeViewModelInjector", "true")
     arg("defaultAnimation", "slideLeft")
     arg("room.schemaLocation", "$projectDir/schemas")
+}
+
+afterEvaluate {
+    publishing {
+        publications {
+            create<MavenPublication>("release") {
+                from(components["release"])
+                groupId = "com.kogen.giraffe"
+                artifactId = "giraffe"
+                version = project.version.toString()
+            }
+        }
+    }
 }

@@ -2,26 +2,23 @@ package com.kogen.giraffe.analizer.parsers
 
 import android.content.Context
 import com.kogen.giraffe.analizer.utils.MediaSignatures
+import com.kogen.giraffe.analizer.utils.ProtoWireScanner
 import com.kogen.giraffe.analizer.utils.saveMediaToCache
 import com.kogen.giraffe.ui.common.domain.models.GiraffeContentType
 
 internal class GiraffeVideoParser : ContentParser {
     override fun parse(originalBytes: ByteArray, context: Context): ParserResult? {
-        val ftypIndex = MediaSignatures.indexOf(originalBytes, MediaSignatures.MP4_FTYP)
-        if (ftypIndex < 4) return null
+        for (leaf in ProtoWireScanner().findBinaryLeaves(originalBytes)) {
+            if (!MediaSignatures.matchesAt(leaf, 4, MediaSignatures.MP4_FTYP)) continue
 
-        val endIndex = MediaSignatures.findMp4End(originalBytes, ftypIndex)
-            .let { if (it == -1) originalBytes.size else it }
+            val endIndex = MediaSignatures.findMp4End(leaf, 4).let { if (it == -1) leaf.size else it }
+            val chunk = leaf.copyOfRange(0, endIndex)
+            val path = saveMediaToCache(context, chunk, "video", "mp4")
 
-        val chunk = originalBytes.copyOfRange(ftypIndex - 4, endIndex)
-        val path = saveMediaToCache(context, chunk, "video", "mp4")
-
-        return path?.let {
-            ParserResult(
-                contentType = GiraffeContentType.Video,
-                filePath = it,
-                bytes = chunk,
-            )
+            path?.let {
+                return ParserResult(contentType = GiraffeContentType.Video, filePath = it, bytes = chunk)
+            }
         }
+        return null
     }
 }

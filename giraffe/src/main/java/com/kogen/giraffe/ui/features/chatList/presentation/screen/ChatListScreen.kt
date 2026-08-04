@@ -34,6 +34,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.kogen.giraffe.BuildConfig
 import com.kogen.giraffe.R
 import com.kogen.giraffe.ui.common.domain.models.GiraffeChat
 import com.kogen.giraffe.ui.common.domain.models.GiraffeChatStatus
@@ -79,6 +80,15 @@ internal fun ChatListScreen(
                                 fontSize = 24.sp,
                             ),
                             color = TextPrimaryColor,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                        Text(
+                            text = "v${BuildConfig.GIRAFFE_VERSION}",
+                            style = TextStyle(
+                                fontSize = 11.sp,
+                            ),
+                            color = TextPrimaryColor.copy(alpha = 0.5f),
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                         )
