@@ -1,0 +1,26 @@
+project:
+  name: Giraffe
+  description: Android gRPC traffic interceptor and in-app debug viewer
+  authors:
+    - Eugen Kopp
+  license: Apache-2.0
+  inceptionYear: '2026'
+  languages:
+    java:
+      groupId: 'io.github.eugenprog'
+
+# Настройки GPG-подписи
+signing:
+  active: ALWAYS
+  armored: true
+
+# Настройки загрузки в Maven Central
+deploy:
+  maven:
+    mavenCentral:
+      sonatype:
+        active: 'ALWAYS'
+        stagingRepositories:
+          - 'giraffe/build/staging-deploy'
+        url: 'https://central.sonatype.com/api/v1/publisher'
+        namespace: 'io.github.eugenprog'
