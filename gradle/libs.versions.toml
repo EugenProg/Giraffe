@@ -22,6 +22,7 @@ runtime = "1.11.4"
 core = "1.15.0"
 room = "2.8.4"
 coil = "2.6.0"
+jreleaser = "1.14.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -59,3 +60,4 @@ kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 protobuf = { id = "com.google.protobuf", version.ref = "protobufPlugin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+jreleaser = { id = "org.jreleaser", version.ref = "jreleaser" }

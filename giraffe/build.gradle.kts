@@ -3,9 +3,11 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
     id("maven-publish")
+    id("signing")
+    alias(libs.plugins.jreleaser)
 }
 
-group = "com.kogen.giraffe"
+group = "io.github.eugenprog"
 version = "0.1.0-SNAPSHOT"
 
 android {
@@ -25,6 +27,7 @@ android {
     publishing {
         singleVariant("release") {
             withSourcesJar()
+            withJavadocJar()
         }
     }
 
@@ -82,10 +85,50 @@ afterEvaluate {
         publications {
             create<MavenPublication>("release") {
                 from(components["release"])
-                groupId = "com.kogen.giraffe"
+                groupId = "io.github.eugenprog"
                 artifactId = "giraffe"
                 version = project.version.toString()
+
+                pom {
+                    name.set("Giraffe")
+                    description.set("Android gRPC traffic interceptor and in-app debug viewer")
+                    url.set("https://github.com/EugenProg/GRaffe")
+
+                    licenses {
+                        license {
+                            name.set("The Apache License, Version 2.0")
+                            url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
+                        }
+                    }
+
+                    developers {
+                        developer {
+                            id.set("EugenProg")
+                            name.set("Eugen Kopp")
+                            email.set("Eugen.kopp.kz@gmail.com")
+                        }
+                    }
+
+                    scm {
+                        connection.set("scm:git:git://github.com/EugenProg/GRaffe.git")
+                        developerConnection.set("scm:git:ssh://github.com:EugenProg/GRaffe.git")
+                        url.set("https://github.com/EugenProg/GRaffe/tree/main")
+                    }
+                }
             }
         }
+        repositories {
+            maven {
+                setUrl(layout.buildDirectory.dir("staging-deploy"))
+            }
+        }
+    }
+
+    signing {
+        val signingKey = System.getenv("JRELEASER_GPG_SECRET_KEY")
+        val signingPassword = System.getenv("JRELEASER_GPG_PASSPHRASE")
+        useInMemoryPgpKeys(signingKey, signingPassword)
+
+        sign(publishing.publications["release"])
     }
 }

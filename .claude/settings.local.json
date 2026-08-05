@@ -42,7 +42,14 @@
       "Bash(python3 *)",
       "Bash(git -C /Users/viktor/StudioProjects/android-ff-business status --short)",
       "Bash(xargs -I{} basename {})",
-      "Bash(./gradlew :giraffe:compileDebugKotlin --console=plain -q)"
+      "Bash(./gradlew :giraffe:compileDebugKotlin --console=plain -q)",
+      "Read(//Users/viktor/StudioProjects/KoGen-Di/koGenDi/**)",
+      "Read(//Users/viktor/StudioProjects/KoGen-Di/**)",
+      "Bash(git remote *)",
+      "Bash(./gradlew :giraffe:tasks --console=plain -q)",
+      "Bash(gh auth *)",
+      "Bash(gh repo *)",
+      "Bash(brew install *)"
     ]
   }
 }
