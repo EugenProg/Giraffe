@@ -49,7 +49,11 @@
       "Bash(./gradlew :giraffe:tasks --console=plain -q)",
       "Bash(gh auth *)",
       "Bash(gh repo *)",
-      "Bash(brew install *)"
+      "Bash(brew install *)",
+      "WebFetch(domain:jreleaser.org)",
+      "Bash(./gradlew :giraffe:jreleaserConfig --console=plain -q)",
+      "Bash(./gradlew :giraffe:jreleaserConfig --console=plain -q --no-configuration-cache)",
+      "Bash(ruby *)"
     ]
   }
 }
