@@ -24,7 +24,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.util.UUID
 
-class GiraffeInterceptor(val context: Context) : ClientInterceptor {
+private val TAG = GiraffeInterceptor::class.java.simpleName
+
+class GiraffeInterceptor(
+    context: Context,
+    private val loggingEnabled: Boolean = true,
+) : ClientInterceptor {
     private val scope = CoroutineScope(Dispatchers.Default)
     private var giraffeLogDao: GiraffeLogDao
     private var notificationService: GiraffeNotificationService
@@ -73,6 +78,12 @@ class GiraffeInterceptor(val context: Context) : ClientInterceptor {
                         )
                     }
 
+                    log(
+                        "▶ START method=$methodShortName\n" +
+                                "host=$host\n" +
+                            "headers=${reqHeaders.joinToString { "${it.key}=${it.value}\n" }}"
+                    )
+
                     giraffeLogDao.startChat(chat, reqHeaders)
                 }
 
@@ -81,14 +92,10 @@ class GiraffeInterceptor(val context: Context) : ClientInterceptor {
                         responseListener
                     ) {
                         override fun onMessage(message: RespT) {
-                            sendNotification(
+                            processMessage(
                                 method = methodShortName,
                                 host = host,
-                                message = message.toString(),
-                                notificationId = chatId,
-                            )
-                            saveMessage(
-                                chatId = chatId.toString(),
+                                chatId = chatId,
                                 isIncoming = true,
                                 message = message as Any,
                             )
@@ -111,6 +118,16 @@ class GiraffeInterceptor(val context: Context) : ClientInterceptor {
                                 val chatStatus =
                                     if (status.isOk || status.code == Status.Code.CANCELLED) GiraffeChatStatus.Ok
                                     else GiraffeChatStatus.Error
+
+                                log(
+                                    "■ CLOSE method=$methodShortName\n" +
+                                            "host=$host\n" +
+                                        "status=${status.code}\n" +
+                                            "description=${status.description}\n" +
+                                        "cause=${status.cause}\n" +
+                                        "trailers=${respHeaders.joinToString { "${it.key}=${it.value}\n" }}"
+                                )
+
                                 giraffeLogDao.completeChat(
                                     chatId = chatId.toString(),
                                     finalStatus = chatStatus,
@@ -126,14 +143,10 @@ class GiraffeInterceptor(val context: Context) : ClientInterceptor {
             }
 
             override fun sendMessage(message: ReqT) {
-                sendNotification(
+                processMessage(
                     method = methodShortName,
                     host = host,
-                    message = message.toString(),
-                    notificationId = chatId,
-                )
-                saveMessage(
-                    chatId = chatId.toString(),
+                    chatId = chatId,
                     isIncoming = false,
                     message = message as Any,
                 )
@@ -143,12 +156,40 @@ class GiraffeInterceptor(val context: Context) : ClientInterceptor {
 
     }
 
-    private fun saveMessage(chatId: String, isIncoming: Boolean, message: Any) {
+    private fun processMessage(
+        method: String,
+        host: String,
+        chatId: UUID,
+        isIncoming: Boolean,
+        message: Any,
+    ) {
         scope.launch {
-            try {
-                val analysis = analyzer.analyze(message)
+            val analysis = try {
+                analyzer.analyze(message)
+            } catch (_: Exception) {
+                null
+            }
+
+            val direction = if (isIncoming) "◀ RESPONSE" else "▶ REQUEST"
+            log(
+                "$direction\n" +
+                        "method=$method\n" +
+                        "host=$host\n" +
+                    "contentType=${analysis?.contentType}\n" +
+                        "filePath=${analysis?.filePath}\n" +
+                    "text=${analysis?.textContent}"
+            )
+
+            notificationService.sendTrafficNotification(
+                methodName = method,
+                host = host,
+                message = analysis?.textContent ?: message.toString(),
+                notificationId = chatId,
+            )
+
+            if (analysis != null) {
                 val dbMessage = GiraffeMessageEntity(
-                    chatId = chatId,
+                    chatId = chatId.toString(),
                     isIncoming = isIncoming,
                     contentType = analysis.contentType,
                     textContent = analysis.textContent,
@@ -156,23 +197,13 @@ class GiraffeInterceptor(val context: Context) : ClientInterceptor {
                     timestamp = System.currentTimeMillis(),
                 )
                 giraffeLogDao.insertMessage(dbMessage)
-            } catch (_: Exception) {
-
             }
         }
     }
 
-    private fun sendNotification(
-        method: String,
-        host: String,
-        message: String,
-        notificationId: UUID
-    ) {
-        notificationService.sendTrafficNotification(
-            methodName = method,
-            host = host,
-            message = message,
-            notificationId = notificationId,
-        )
+    private fun log(message: String) {
+        if (loggingEnabled) {
+            Log.d(TAG, message)
+        }
     }
 }

@@ -63,6 +63,7 @@ class GiraffeMessageAnalyzer(
             isJson -> textRepresentation
             else -> null
         }
+//        logBytesAsHex(originalBytes)
 
         return AnalysisResult(
             contentType = parsingResult?.contentType
@@ -70,6 +71,16 @@ class GiraffeMessageAnalyzer(
             textContent = truncateForDb(readyText) ?: textRepresentation.take(1000),
             filePath = parsingResult?.filePath,
         )
+    }
+
+    fun logBytesAsHex(bytes: ByteArray, tag: String = ">>> raw_bytes_hex", maxBytes: Int = 512) {
+        val sb = StringBuilder()
+        val limit = minOf(bytes.size, maxBytes)
+        for (i in 0 until limit) {
+            sb.append(String.format("%02x", bytes[i]))
+            if ((i + 1) % 16 == 0) sb.append("\n") else sb.append(" ")
+        }
+        Log.d(tag, "size=${bytes.size}\n$sb")
     }
 
     fun truncateForDb(text: String?, maxLength: Int = MAX_DB_TEXT_LENGTH): String? {
@@ -105,6 +116,11 @@ class GiraffeMessageAnalyzer(
                 value = value.replace("\\\"", "\"")
             }
 
+            val decoded = tryDecodeAsText(value)
+            if (decoded != null) {
+                value = decoded
+            }
+
             try {
                 when {
                     value.startsWith("{") && value.endsWith("}") -> {
@@ -127,12 +143,81 @@ class GiraffeMessageAnalyzer(
         return jsonObject.toString(2)
     }
 
+    fun unescapeProtobufString(input: String): ByteArray {
+        val result = mutableListOf<Byte>()
+        var i = 0
+        while (i < input.length) {
+            val c = input[i]
+            if (c == '\\' && i + 1 < input.length) {
+                when (input[i + 1]) {
+                    'n' -> {
+                        result.add(0x0A); i += 2
+                    }
+
+                    'r' -> {
+                        result.add(0x0D); i += 2
+                    }
+
+                    't' -> {
+                        result.add(0x09); i += 2
+                    }
+
+                    '"' -> {
+                        result.add(0x22); i += 2
+                    }
+
+                    '\'' -> {
+                        result.add(0x27); i += 2
+                    }
+
+                    '\\' -> {
+                        result.add(0x5C); i += 2
+                    }
+
+                    in '0'..'7' -> {
+                        // до 3 восьмеричных цифр
+                        var j = i + 1
+                        var octal = ""
+                        while (j < input.length && octal.length < 3 && input[j] in '0'..'7') {
+                            octal += input[j]
+                            j++
+                        }
+                        result.add(octal.toInt(8).toByte())
+                        i = j
+                    }
+
+                    else -> {
+                        result.add(c.code.toByte()); i++
+                    }
+                }
+            } else {
+                result.add(c.code.toByte())
+                i++
+            }
+        }
+        return result.toByteArray()
+    }
+
+    fun tryDecodeAsText(escapedValue: String): String? {
+        val bytes = unescapeProtobufString(escapedValue)
+        return try {
+            val decoded = String(bytes, Charsets.UTF_8)
+            val reEncoded = decoded.toByteArray(Charsets.UTF_8)
+            if (reEncoded.contentEquals(bytes)) decoded else null
+        } catch (_: Exception) {
+            null
+        }
+    }
+
     fun escapeLikeProtobuf(bytes: ByteArray): String {
         val sb = StringBuilder()
         for (b in bytes) {
-            val v = b.toInt() and 0xFF
-            when (v) {
+            when (val v = b.toInt() and 0xFF) {
+                0x07 -> sb.append("\\a")
+                0x08 -> sb.append("\\b")
                 0x0A -> sb.append("\\n")
+                0x0B -> sb.append("\\v")
+                0x0C -> sb.append("\\f")
                 0x0D -> sb.append("\\r")
                 0x09 -> sb.append("\\t")
                 0x22 -> sb.append("\\\"")
@@ -167,13 +252,11 @@ class GiraffeMessageAnalyzer(
 
         val startIdx = fullString.indexOf(startEscaped)
         if (startIdx == -1) {
-            Log.d(">>> cutMedia", "start pattern not found: $startEscaped")
             return fullString
         }
 
         val endIdx = fullString.lastIndexOf(endEscaped)
         if (endIdx == -1 || endIdx < startIdx) {
-            Log.d(">>> cutMedia", "end pattern not found or before start: $endEscaped")
             return fullString
         }
 

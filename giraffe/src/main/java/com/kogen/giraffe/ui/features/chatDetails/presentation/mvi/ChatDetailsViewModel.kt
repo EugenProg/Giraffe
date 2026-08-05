@@ -2,6 +2,7 @@ package com.kogen.giraffe.ui.features.chatDetails.presentation.mvi
 
 import androidx.lifecycle.viewModelScope
 import com.kogen.giraffe.ui.common.mvi.BaseMviViewModel
+import com.kogen.giraffe.ui.common.presentation.AudioPlayer
 import com.kogen.giraffe.ui.features.chatDetails.domain.useCases.LoadChatDetailsUseCase
 import kotlinx.coroutines.launch
 import kz.evko.kogen_di.annotations.KoGenViewModel
@@ -9,6 +10,7 @@ import kz.evko.kogen_di.annotations.KoGenViewModel
 @KoGenViewModel
 internal class ChatDetailsViewModel(
     private val loadChatDetailsUseCase: LoadChatDetailsUseCase,
+    private val audioPlayer: AudioPlayer,
 ) :
     BaseMviViewModel<ChatDetailsAction, ChatDetailsState, ChatDetailsEffect>(
         ChatDetailsState()
@@ -19,6 +21,14 @@ internal class ChatDetailsViewModel(
             loadChatDetailsUseCase.chatDetails.collect { chat ->
                 updateState {
                     it.copy(chat = chat)
+                }
+            }
+        }
+
+        viewModelScope.launch {
+            audioPlayer.state.collect { playback ->
+                updateState {
+                    it.copy(audioPlayback = playback)
                 }
             }
         }
@@ -47,6 +57,24 @@ internal class ChatDetailsViewModel(
                     it.copy(showRequestDetails = false)
                 }
             }
+
+            is ChatDetailsAction.PlayAudio -> {
+                val current = state.value.audioPlayback
+                if (current.filePath == action.filePath && current.isPlaying) {
+                    audioPlayer.pause()
+                } else {
+                    audioPlayer.play(action.filePath)
+                }
+            }
+
+            is ChatDetailsAction.SeekAudio -> {
+                audioPlayer.seekTo(action.positionMs)
+            }
         }
+    }
+
+    override fun onCleared() {
+        audioPlayer.release()
+        super.onCleared()
     }
 }

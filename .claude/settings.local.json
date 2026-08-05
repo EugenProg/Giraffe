@@ -31,7 +31,25 @@
       "Bash(./gradlew :app:assembleDebug)",
       "Bash(./gradlew clean *)",
       "Bash(./gradlew :giraffe:compileDebugKotlin -q)",
-      "Bash(./gradlew :app:compileDebugKotlin -q)"
+      "Bash(./gradlew :app:compileDebugKotlin -q)",
+      "Bash(./gradlew :giraffe:publishToMavenLocal --console=plain)",
+      "Bash(./gradlew :giraffe:assembleRelease --console=plain)",
+      "Bash(./gradlew :giraffe:assembleDebug --console=plain)",
+      "Bash(./gradlew :app:assembleDebug --console=plain)",
+      "Bash(./gradlew :features:auth:entry:domain:compileDebugKotlin --console=plain)",
+      "Bash(./gradlew :app:assembleDebug --console=plain --refresh-dependencies)",
+      "Bash(python3 -c 'import json;d=json.load\\(open\\('\\\\''/Users/viktor/.m2/repository/com/kogen/giraffe/giraffe/0.1.0-SNAPSHOT/giraffe-0.1.0-SNAPSHOT.module'\\\\''\\)\\); *)",
+      "Bash(python3 *)",
+      "Bash(git -C /Users/viktor/StudioProjects/android-ff-business status --short)",
+      "Bash(xargs -I{} basename {})",
+      "Bash(./gradlew :giraffe:compileDebugKotlin --console=plain -q)",
+      "Read(//Users/viktor/StudioProjects/KoGen-Di/koGenDi/**)",
+      "Read(//Users/viktor/StudioProjects/KoGen-Di/**)",
+      "Bash(git remote *)",
+      "Bash(./gradlew :giraffe:tasks --console=plain -q)",
+      "Bash(gh auth *)",
+      "Bash(gh repo *)",
+      "Bash(brew install *)"
     ]
   }
 }

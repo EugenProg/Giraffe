@@ -14,7 +14,6 @@ internal object MediaSignatures {
         byteArrayOf(0x52.toByte(), 0x49.toByte(), 0x46.toByte(), 0x46.toByte())
     val WEBP_TAG = byteArrayOf(0x57.toByte(), 0x45.toByte(), 0x42.toByte(), 0x50.toByte())
 
-    val MP3 = byteArrayOf(0x49.toByte(), 0x44.toByte(), 0x33.toByte())
     val WAV =
         byteArrayOf(0x52.toByte(), 0x49.toByte(), 0x46.toByte(), 0x46.toByte())
     val WAVE_TAG = byteArrayOf(0x57.toByte(), 0x41.toByte(), 0x56.toByte(), 0x45.toByte())
@@ -68,6 +67,16 @@ internal object MediaSignatures {
             if (match) return i + signatureEnd.size
         }
         return -1
+    }
+
+    /** Checks the signature at an exact offset — used to confirm a leaf *starts with* a
+     * container's magic bytes, instead of scanning for a coincidental match anywhere inside it. */
+    fun matchesAt(bytes: ByteArray, offset: Int, signature: ByteArray): Boolean {
+        if (offset < 0 || offset + signature.size > bytes.size) return false
+        for (i in signature.indices) {
+            if (bytes[offset + i] != signature[i]) return false
+        }
+        return true
     }
 
     fun indexOf(bytes: ByteArray, signature: ByteArray, from: Int = 0): Int {
