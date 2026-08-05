@@ -53,7 +53,12 @@
       "WebFetch(domain:jreleaser.org)",
       "Bash(./gradlew :giraffe:jreleaserConfig --console=plain -q)",
       "Bash(./gradlew :giraffe:jreleaserConfig --console=plain -q --no-configuration-cache)",
-      "Bash(ruby *)"
+      "Bash(ruby *)",
+      "Bash(./gradlew :giraffe:properties --console=plain -q)",
+      "Bash(./gradlew :giraffe:properties -Pversion=0.1.0-alpha01 --console=plain -q)",
+      "Bash(./gradlew :giraffe:generatePomFileForReleasePublication -Pversion=0.1.0-alpha01 --console=plain -q)",
+      "Bash(git ls-remote *)",
+      "Bash(git fetch *)"
     ]
   }
 }

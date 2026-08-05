@@ -8,7 +8,9 @@ plugins {
 }
 
 group = "io.github.eugenprog"
-version = "0.1.0-SNAPSHOT"
+if (version == Project.DEFAULT_VERSION) {
+    version = "0.1.0-SNAPSHOT"
+}
 
 android {
     namespace = "com.kogen.giraffe"
