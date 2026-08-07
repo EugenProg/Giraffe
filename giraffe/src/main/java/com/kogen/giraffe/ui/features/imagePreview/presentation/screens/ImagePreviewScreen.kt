@@ -25,7 +25,7 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.kogen.giraffe.R
 import com.kogen.giraffe.ui.common.main.TextPrimaryColor
-import com.kogen.giraffe.ui.common.presentation.extensions.shareAsImage
+import com.kogen.giraffe.ui.common.presentation.extensions.shareFile
 import net.engawapg.lib.zoomable.rememberZoomState
 import net.engawapg.lib.zoomable.zoomable
 import java.io.File
@@ -76,7 +76,7 @@ internal fun ImagePreviewScreen(
             PreviewIconButton(
                 icon = R.drawable.ic_share,
                 contentDescription = "Share",
-                onClick = { file.shareAsImage(context) },
+                onClick = { file.shareFile(context, mimeType = "image/*") },
             )
         }
     }

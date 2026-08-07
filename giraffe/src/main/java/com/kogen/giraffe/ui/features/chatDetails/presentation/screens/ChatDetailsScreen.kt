@@ -1,6 +1,7 @@
 package com.kogen.giraffe.ui.features.chatDetails.presentation.screens
 
 import android.annotation.SuppressLint
+import android.content.Context
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
@@ -62,6 +63,7 @@ import com.kogen.giraffe.ui.common.presentation.NoContentView
 import com.kogen.giraffe.ui.common.presentation.extensions.copyToClipboard
 import com.kogen.giraffe.ui.common.presentation.extensions.decodeImageAspectRatio
 import com.kogen.giraffe.ui.common.presentation.extensions.msToDurationText
+import com.kogen.giraffe.ui.common.presentation.extensions.shareFile
 import com.kogen.giraffe.ui.common.presentation.extensions.timestampToDateTime
 import com.kogen.giraffe.ui.common.presentation.extensions.timestampToTime
 import com.kogen.giraffe.ui.features.chatDetails.presentation.mvi.ChatDetailsAction
@@ -325,6 +327,15 @@ private fun ServerMessageView(
                             action = action,
                         )
                     }
+
+                    GiraffeContentType.Unknown -> {
+                        Spacer(Modifier.height(4.dp))
+                        UnknownFileView(
+                            filePath = message.filePath,
+                            context = context,
+                        )
+                    }
+
                     else -> {}
                 }
             }
@@ -427,6 +438,15 @@ private fun ClientMessageView(
                             action = action,
                         )
                     }
+
+                    GiraffeContentType.Unknown -> {
+                        Spacer(Modifier.height(4.dp))
+                        UnknownFileView(
+                            filePath = message.filePath,
+                            context = context,
+                        )
+                    }
+
                     else -> {}
                 }
             }
@@ -565,5 +585,46 @@ private fun VoiceMessageView(
                 color = TextPrimaryColor.copy(alpha = 0.6f),
             )
         }
+    }
+}
+
+@Composable
+private fun UnknownFileView(
+    filePath: String,
+    context: Context,
+) {
+    val file = remember(filePath) { File(filePath) }
+
+    Row(
+        modifier = Modifier
+            .widthIn(min = 160.dp, max = 220.dp)
+            .clip(RoundedCornerShape(10.dp))
+            .background(BackgroundColor)
+            .clickable { file.shareFile(context) }
+            .padding(horizontal = 10.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            modifier = Modifier.size(20.dp),
+            painter = painterResource(R.drawable.ic_file),
+            contentDescription = null,
+            tint = PrimaryColor,
+        )
+        Spacer(Modifier.width(8.dp))
+        Text(
+            modifier = Modifier.weight(1f),
+            text = "Unknown file",
+            style = TextStyle(fontSize = 13.sp),
+            color = TextPrimaryColor,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+        Spacer(Modifier.width(8.dp))
+        Icon(
+            modifier = Modifier.size(16.dp),
+            painter = painterResource(R.drawable.ic_share),
+            contentDescription = "Share",
+            tint = PrimaryColor,
+        )
     }
 }

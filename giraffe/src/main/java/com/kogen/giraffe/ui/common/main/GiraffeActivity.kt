@@ -11,7 +11,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.LaunchedEffect
 import androidx.navigation.compose.rememberNavController
 import com.kogen.giraffe.di.setApplicationContext
-import com.kogen.giraffe.navigation.ActionToChatDetailsContainer
+import com.kogen.giraffe.navigation.ActionToChatDetails
 import com.kogen.giraffe.navigation.AppNavHost
 import com.kogen.giraffe.navigation.navigateSafety
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -38,7 +38,7 @@ class GiraffeActivity : ComponentActivity() {
 
             LaunchedEffect(Unit) {
                 pendingChatId.collect { chatId ->
-                    navController.navigateSafety(ActionToChatDetailsContainer(chatId))
+                    navController.navigateSafety(ActionToChatDetails(chatId))
                 }
             }
 

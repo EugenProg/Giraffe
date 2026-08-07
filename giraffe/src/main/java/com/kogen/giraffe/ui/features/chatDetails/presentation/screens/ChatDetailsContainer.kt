@@ -5,7 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.navigation.NavHostController
 import com.kogen.giraffe.di.koGenViewModel
-import com.kogen.giraffe.navigation.ActionToImagePreviewContainer
+import com.kogen.giraffe.navigation.ActionToImagePreview
 import com.kogen.giraffe.navigation.navigateSafety
 import com.kogen.giraffe.navigation.popBackSafety
 import com.kogen.giraffe.ui.common.ScreenContainerWrapper
@@ -26,10 +26,7 @@ fun ChatDetailsContainer(
             when (it) {
                 is ChatDetailsEffect.NavigateBack -> navController.popBackSafety()
                 is ChatDetailsEffect.ShowImage -> {
-                    // Encoded because the generated route embeds this as a raw query string,
-                    // and an absolute cache path can contain characters that would otherwise
-                    // confuse route matching (see ImagePreviewContainer).
-                    navController.navigateSafety(ActionToImagePreviewContainer(Uri.encode(it.filePath)))
+                    navController.navigateSafety(ActionToImagePreview(Uri.encode(it.filePath)))
                 }
             }
         },

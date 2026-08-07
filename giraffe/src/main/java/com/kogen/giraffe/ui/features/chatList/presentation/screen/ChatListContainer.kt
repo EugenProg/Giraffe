@@ -3,7 +3,7 @@ package com.kogen.giraffe.ui.features.chatList.presentation.screen
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import com.kogen.giraffe.di.koGenViewModel
-import com.kogen.giraffe.navigation.ActionToChatDetailsContainer
+import com.kogen.giraffe.navigation.ActionToChatDetails
 import com.kogen.giraffe.navigation.navigateSafety
 import com.kogen.giraffe.ui.common.ScreenContainerWrapper
 import com.kogen.giraffe.ui.features.chatList.presentation.mvi.ChatListEffect
@@ -20,7 +20,7 @@ fun ChatListContainer(
         onEffect = {
             when (it) {
                 is ChatListEffect.NavigateToDetails -> {
-                    navController.navigateSafety(ActionToChatDetailsContainer(it.id))
+                    navController.navigateSafety(ActionToChatDetails(it.id))
                 }
             }
         },
