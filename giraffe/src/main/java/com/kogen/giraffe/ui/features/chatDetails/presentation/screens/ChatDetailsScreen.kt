@@ -1,6 +1,7 @@
 package com.kogen.giraffe.ui.features.chatDetails.presentation.screens
 
 import android.annotation.SuppressLint
+import android.content.Context
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
@@ -38,6 +39,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
@@ -47,12 +49,15 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.ImageLoader
 import coil.compose.AsyncImage
+import coil.decode.VideoFrameDecoder
 import com.kogen.giraffe.R
 import com.kogen.giraffe.ui.common.domain.models.GiraffeChat
 import com.kogen.giraffe.ui.common.domain.models.GiraffeChatStatus
 import com.kogen.giraffe.ui.common.domain.models.GiraffeContentType
 import com.kogen.giraffe.ui.common.domain.models.GiraffeMessage
+import com.kogen.giraffe.ui.common.domain.models.toClipboardText
 import com.kogen.giraffe.ui.common.main.BGSecondaryColor
 import com.kogen.giraffe.ui.common.main.BackgroundColor
 import com.kogen.giraffe.ui.common.main.PrimaryColor
@@ -61,7 +66,9 @@ import com.kogen.giraffe.ui.common.presentation.AudioPlaybackState
 import com.kogen.giraffe.ui.common.presentation.NoContentView
 import com.kogen.giraffe.ui.common.presentation.extensions.copyToClipboard
 import com.kogen.giraffe.ui.common.presentation.extensions.decodeImageAspectRatio
+import com.kogen.giraffe.ui.common.presentation.extensions.decodeVideoAspectRatio
 import com.kogen.giraffe.ui.common.presentation.extensions.msToDurationText
+import com.kogen.giraffe.ui.common.presentation.extensions.shareFile
 import com.kogen.giraffe.ui.common.presentation.extensions.timestampToDateTime
 import com.kogen.giraffe.ui.common.presentation.extensions.timestampToTime
 import com.kogen.giraffe.ui.features.chatDetails.presentation.mvi.ChatDetailsAction
@@ -78,6 +85,7 @@ internal fun ChatDetailsScreen(
     state: ChatDetailsState,
     action: (ChatDetailsAction) -> Unit
 ) {
+    val context = LocalContext.current
     Scaffold(
         containerColor = BackgroundColor,
         topBar = {
@@ -119,6 +127,19 @@ internal fun ChatDetailsScreen(
                             color = TextPrimaryColor,
                             maxLines = 2,
                             overflow = TextOverflow.Ellipsis,
+                        )
+                        Icon(
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(RoundedCornerShape(6.dp))
+                                .clickable {
+                                    state.chat?.toClipboardText()
+                                        ?.copyToClipboard(context, title = "Request")
+                                }
+                                .padding(8.dp),
+                            painter = painterResource(R.drawable.ic_copy),
+                            contentDescription = "Copy whole request",
+                            tint = PrimaryColor,
                         )
                     }
                     Box(
@@ -292,7 +313,7 @@ private fun ServerMessageView(
                 color = TextPrimaryColor,
             )
             if (message.filePath.isNullOrBlank().not()) {
-                when(message.contentType) {
+                when (message.contentType) {
                     GiraffeContentType.Image -> {
                         Spacer(Modifier.height(8.dp))
 
@@ -300,13 +321,17 @@ private fun ServerMessageView(
                             decodeImageAspectRatio(message.filePath)
                         }
                         BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
-                            val targetHeight = (maxWidth / (aspectRatio ?: 0f)).coerceIn(120.dp, 260.dp)
+                            val targetHeight =
+                                (maxWidth / (aspectRatio ?: 0f)).coerceIn(120.dp, 260.dp)
 
                             AsyncImage(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .height(targetHeight)
-                                    .clip(RoundedCornerShape(14.dp)),
+                                    .clip(RoundedCornerShape(14.dp))
+                                    .clickable {
+                                        action(ChatDetailsAction.ShowImage(message.filePath))
+                                    },
                                 model = File(message.filePath),
                                 contentDescription = null,
                                 contentScale = ContentScale.Crop,
@@ -322,6 +347,26 @@ private fun ServerMessageView(
                             action = action,
                         )
                     }
+
+                    GiraffeContentType.Video -> {
+                        Spacer(Modifier.height(8.dp))
+                        VideoThumbnailView(
+                            filePath = message.filePath,
+                            context = context,
+                            onClick = {
+                                action(ChatDetailsAction.ShowVideo(message.filePath))
+                            },
+                        )
+                    }
+
+                    GiraffeContentType.Unknown -> {
+                        Spacer(Modifier.height(4.dp))
+                        UnknownFileView(
+                            filePath = message.filePath,
+                            context = context,
+                        )
+                    }
+
                     else -> {}
                 }
             }
@@ -391,7 +436,7 @@ private fun ClientMessageView(
                 color = TextPrimaryColor,
             )
             if (message.filePath.isNullOrBlank().not()) {
-                when(message.contentType) {
+                when (message.contentType) {
                     GiraffeContentType.Image -> {
                         Spacer(Modifier.height(8.dp))
 
@@ -399,13 +444,17 @@ private fun ClientMessageView(
                             decodeImageAspectRatio(message.filePath)
                         }
                         BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
-                            val targetHeight = (maxWidth / (aspectRatio ?: 0f)).coerceIn(120.dp, 260.dp)
+                            val targetHeight =
+                                (maxWidth / (aspectRatio ?: 0f)).coerceIn(120.dp, 260.dp)
 
                             AsyncImage(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .height(targetHeight)
-                                    .clip(RoundedCornerShape(14.dp)),
+                                    .clip(RoundedCornerShape(14.dp))
+                                    .clickable {
+                                        action(ChatDetailsAction.ShowImage(message.filePath))
+                                    },
                                 model = File(message.filePath),
                                 contentDescription = null,
                                 contentScale = ContentScale.Crop,
@@ -421,6 +470,26 @@ private fun ClientMessageView(
                             action = action,
                         )
                     }
+
+                    GiraffeContentType.Video -> {
+                        Spacer(Modifier.height(8.dp))
+                        VideoThumbnailView(
+                            filePath = message.filePath,
+                            context = context,
+                            onClick = {
+                                action(ChatDetailsAction.ShowVideo(message.filePath))
+                            },
+                        )
+                    }
+
+                    GiraffeContentType.Unknown -> {
+                        Spacer(Modifier.height(4.dp))
+                        UnknownFileView(
+                            filePath = message.filePath,
+                            context = context,
+                        )
+                    }
+
                     else -> {}
                 }
             }
@@ -524,7 +593,8 @@ private fun VoiceMessageView(
                                     detectDragGestures(
                                         onDrag = { change, _ ->
                                             change.consume()
-                                            val fraction = (change.position.x / size.width).coerceIn(0f, 1f)
+                                            val fraction =
+                                                (change.position.x / size.width).coerceIn(0f, 1f)
                                             action(ChatDetailsAction.SeekAudio((fraction * durationMs).toInt()))
                                         }
                                     )
@@ -558,6 +628,105 @@ private fun VoiceMessageView(
                 style = TextStyle(fontSize = 11.sp),
                 color = TextPrimaryColor.copy(alpha = 0.6f),
             )
+        }
+    }
+}
+
+@Composable
+private fun UnknownFileView(
+    filePath: String,
+    context: Context,
+) {
+    val file = remember(filePath) { File(filePath) }
+
+    Row(
+        modifier = Modifier
+            .widthIn(min = 160.dp, max = 220.dp)
+            .clip(RoundedCornerShape(10.dp))
+            .background(BackgroundColor)
+            .clickable { file.shareFile(context) }
+            .padding(horizontal = 10.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            modifier = Modifier.size(20.dp),
+            painter = painterResource(R.drawable.ic_file),
+            contentDescription = null,
+            tint = PrimaryColor,
+        )
+        Spacer(Modifier.width(8.dp))
+        Text(
+            modifier = Modifier.weight(1f),
+            text = "Unknown file",
+            style = TextStyle(fontSize = 13.sp),
+            color = TextPrimaryColor,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+        Spacer(Modifier.width(8.dp))
+        Icon(
+            modifier = Modifier.size(16.dp),
+            painter = painterResource(R.drawable.ic_share),
+            contentDescription = "Share",
+            tint = PrimaryColor,
+        )
+    }
+}
+
+/**
+ * Thumbnail bubble for a video message: a decoded first frame with a play badge over it, tapping
+ * anywhere opens the full-screen, auto-playing [com.kogen.giraffe.ui.features.videoPreview.presentation.screens.VideoPreviewScreen]
+ * rather than trying to play video inline the way voice messages do.
+ */
+@SuppressLint("UnusedBoxWithConstraintsScope")
+@Composable
+private fun VideoThumbnailView(
+    filePath: String,
+    context: Context,
+    onClick: () -> Unit,
+) {
+    val aspectRatio = remember(filePath) { decodeVideoAspectRatio(filePath) }
+    // Coil doesn't decode video frames out of the box; this loader is scoped to this bubble
+    // (rather than the whole screen) to keep the change local - LazyColumn only keeps a handful
+    // of these composed at once, so the duplication is bounded.
+    val videoImageLoader = remember(context) {
+        ImageLoader.Builder(context)
+            .components { add(VideoFrameDecoder.Factory()) }
+            .build()
+    }
+
+    BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+        val targetHeight = (maxWidth / (aspectRatio ?: 0f)).coerceIn(120.dp, 260.dp)
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(targetHeight)
+                .clip(RoundedCornerShape(14.dp))
+                .clickable(onClick = onClick),
+        ) {
+            AsyncImage(
+                modifier = Modifier.fillMaxSize(),
+                model = File(filePath),
+                imageLoader = videoImageLoader,
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+            )
+            Box(
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .size(44.dp)
+                    .clip(CircleShape)
+                    .background(Color.Black.copy(alpha = 0.45f)),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    modifier = Modifier.size(22.dp),
+                    painter = painterResource(R.drawable.ic_play),
+                    contentDescription = null,
+                    tint = Color.White,
+                )
+            }
         }
     }
 }

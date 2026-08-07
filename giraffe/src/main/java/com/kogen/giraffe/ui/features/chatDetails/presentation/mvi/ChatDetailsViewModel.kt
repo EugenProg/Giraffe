@@ -70,6 +70,14 @@ internal class ChatDetailsViewModel(
             is ChatDetailsAction.SeekAudio -> {
                 audioPlayer.seekTo(action.positionMs)
             }
+
+            is ChatDetailsAction.ShowImage -> {
+                emitEffect(ChatDetailsEffect.ShowImage(action.filePath))
+            }
+
+            is ChatDetailsAction.ShowVideo -> {
+                emitEffect(ChatDetailsEffect.ShowVideo(action.filePath))
+            }
         }
     }
 

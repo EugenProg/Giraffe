@@ -9,4 +9,6 @@ sealed interface ChatDetailsAction : UiAction {
     data object HideRequestDetail: ChatDetailsAction
     data class PlayAudio(val filePath: String) : ChatDetailsAction
     data class SeekAudio(val positionMs: Int) : ChatDetailsAction
+    data class ShowImage(val filePath: String) : ChatDetailsAction
+    data class ShowVideo(val filePath: String) : ChatDetailsAction
 }

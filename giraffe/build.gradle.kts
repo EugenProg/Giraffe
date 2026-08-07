@@ -44,6 +44,23 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+    sourceSets {
+        getByName("debug") {
+            java.directories.add("build/generated/ksp/debug/kotlin")
+        }
+        getByName("release") {
+            java.directories.add("build/generated/ksp/release/kotlin")
+        }
+    }
+}
+
+// The sourceSets registration above points AGP/the IDE at KSP's output directory directly by
+// path, which Gradle can't trace back to the kspXxxKotlin task that produces it. Without an
+// explicit dependency, tasks that read that directory (e.g. annotation extraction for the
+// published AAR) can run before KSP has generated anything.
+tasks.configureEach {
+    if (name == "extractDebugAnnotations") dependsOn("kspDebugKotlin")
+    if (name == "extractReleaseAnnotations") dependsOn("kspReleaseKotlin")
 }
 
 dependencies {
@@ -73,6 +90,10 @@ dependencies {
     debugImplementation(libs.compose.ui.tooling)
     implementation(libs.coil.base)
     implementation(libs.coil)
+    implementation(libs.coil.video)
+    implementation(libs.zoomable)
+    implementation(libs.media3.exoplayer)
+    implementation(libs.media3.ui)
 
     testImplementation(libs.junit)
     testImplementation(libs.mockk)
@@ -88,6 +109,7 @@ ksp {
     arg("packageName", "com.kogen.giraffe")
     arg("includeViewModelInjector", "true")
     arg("defaultAnimation", "slideLeft")
+    arg("screenSuffix", "container")
     arg("room.schemaLocation", "$projectDir/schemas")
 }
 
