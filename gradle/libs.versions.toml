@@ -11,12 +11,12 @@ protobuf = "4.35.1"
 protobufPlugin = "0.10.0"
 coroutines = "1.11.0"
 ksp = "2.1.21-2.0.2"
-kogenDi = "1.0.4"
+kogenDi = "1.0.8"
 constraintLayout = "2.2.1"
 composeBom = "2024.12.01"
 activityCompose = "1.9.3"
 lifecycleViewmodel = "2.8.7"
-koGenNavigation = "1.0.0"
+koGenNavigation = "1.0.1"
 navigation = "2.8.4"
 runtime = "1.11.4"
 core = "1.15.0"
@@ -24,6 +24,10 @@ room = "2.8.4"
 coil = "2.6.0"
 jreleaser = "1.14.0"
 junit = "4.13.2"
+mockk = "1.13.13"
+turbine = "1.2.0"
+truth = "1.4.4"
+orgJson = "20240303"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -37,6 +41,7 @@ grpc-kotlin-stub = { group = "io.grpc", name = "grpc-kotlin-stub", version.ref =
 protobuf = { group = "com.google.protobuf", name = "protobuf-kotlin-lite", version.ref = "protobuf" }
 coroutines = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }
 kogen-di = { group = "io.github.eugenprog", name = "android-di", version.ref = "kogenDi" }
+kogen-di-compiler = { group = "io.github.eugenprog", name = "android-di-compiler", version.ref = "kogenDi" }
 androidx-constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintLayout" }
 compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
 compose-ui = { group = "androidx.compose.ui", name = "ui" }
@@ -51,10 +56,16 @@ androidx-core = { group = "androidx.core", name = "core", version.ref = "core" }
 room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
 room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
 koGenNavigation = { group = "io.github.eugenprog", name = "navigation-compose", version.ref = "koGenNavigation" }
+koGenNavigationCompiler = { group = "io.github.eugenprog", name = "navigation-compose-compiler", version.ref = "koGenNavigation" }
 androidx-navigation = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigation" }
 coil-base = { group = "io.coil-kt", name = "coil-compose-base", version.ref = "coil" }
 coil = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
+mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }
+coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutines" }
+turbine = { group = "app.cash.turbine", name = "turbine", version.ref = "turbine" }
+truth = { group = "com.google.truth", name = "truth", version.ref = "truth" }
+org-json = { group = "org.json", name = "json", version.ref = "orgJson" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

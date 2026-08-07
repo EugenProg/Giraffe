@@ -58,7 +58,20 @@
       "Bash(./gradlew :giraffe:properties -Pversion=0.1.0-alpha01 --console=plain -q)",
       "Bash(./gradlew :giraffe:generatePomFileForReleasePublication -Pversion=0.1.0-alpha01 --console=plain -q)",
       "Bash(git ls-remote *)",
-      "Bash(git fetch *)"
+      "Bash(git fetch *)",
+      "Bash(timeout 180 ./gradlew :giraffe:testDebugUnitTest --offline)",
+      "Bash(./gradlew :giraffe:testDebugUnitTest --offline)",
+      "Bash(grep -v \"\\\\.git\\\\|\\\\.gradle\\\\|\\\\.idea\\\\|build$\")",
+      "Bash(curl -sI --max-time 5 https://repo1.maven.org/maven2/)",
+      "Bash(./gradlew :giraffe:testDebugUnitTest --console=plain)",
+      "Bash(curl -s \"https://repo1.maven.org/maven2/io/github/eugenprog/navigation-compose-compiler/maven-metadata.xml\")",
+      "Bash(curl -s \"https://repo1.maven.org/maven2/io/github/eugenprog/navigation-compose/maven-metadata.xml\")",
+      "Bash(./gradlew :giraffe:testDebugUnitTest --rerun --console=plain)",
+      "Bash(./gradlew :giraffe:testDebugUnitTest --rerun-tasks --console=plain)",
+      "Bash(rm /Users/viktor/AndroidStudioProjects/Graffe/giraffe/src/test/java/com/kogen/graffe/ExampleUnitTest.kt)",
+      "Bash(rmdir /Users/viktor/AndroidStudioProjects/Graffe/giraffe/src/test/java/com/kogen/graffe)",
+      "Bash(git checkout *)",
+      "Bash(git add *)"
     ]
   }
 }

@@ -53,10 +53,10 @@ dependencies {
     implementation(libs.grpc.protobuf)
 
     implementation(libs.kogen.di)
-    ksp(libs.kogen.di)
+    ksp(libs.kogen.di.compiler)
     implementation(libs.androidx.navigation)
     implementation(libs.koGenNavigation)
-    ksp(libs.koGenNavigation)
+    ksp(libs.koGenNavigationCompiler)
     implementation(libs.room.runtime)
     ksp(libs.room.compiler)
     implementation(libs.coroutines)
@@ -75,6 +75,13 @@ dependencies {
     implementation(libs.coil)
 
     testImplementation(libs.junit)
+    testImplementation(libs.mockk)
+    testImplementation(libs.coroutines.test)
+    testImplementation(libs.turbine)
+    testImplementation(libs.truth)
+    // Real org.json implementation so JSON parsing works in plain JVM unit tests
+    // (Android's stub android.jar throws "not mocked" for org.json otherwise).
+    testImplementation(libs.org.json)
 }
 
 ksp {
@@ -128,11 +135,12 @@ afterEvaluate {
         }
     }
 
-    signing {
-        val signingKey = System.getenv("JRELEASER_GPG_SECRET_KEY")
-        val signingPassword = System.getenv("JRELEASER_GPG_PASSPHRASE")
-        useInMemoryPgpKeys(signingKey, signingPassword)
-
-        sign(publishing.publications["release"])
+    val signingKey = System.getenv("JRELEASER_GPG_SECRET_KEY")
+    val signingPassword = System.getenv("JRELEASER_GPG_PASSPHRASE")
+    if (!signingKey.isNullOrBlank() && !signingPassword.isNullOrBlank()) {
+        signing {
+            useInMemoryPgpKeys(signingKey, signingPassword)
+            sign(publishing.publications["release"])
+        }
     }
 }
