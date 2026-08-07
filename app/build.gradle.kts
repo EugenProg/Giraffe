@@ -49,7 +49,7 @@ dependencies {
     implementation(libs.androidx.runtime)
     implementation(libs.coroutines)
     implementation(libs.kogen.di)
-    ksp(libs.kogen.di)
+    ksp(libs.kogen.di.compiler)
 
     // gRPC
     implementation(libs.grpc.stub)
