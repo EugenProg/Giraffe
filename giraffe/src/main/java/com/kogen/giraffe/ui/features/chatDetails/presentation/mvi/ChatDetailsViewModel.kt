@@ -74,6 +74,10 @@ internal class ChatDetailsViewModel(
             is ChatDetailsAction.ShowImage -> {
                 emitEffect(ChatDetailsEffect.ShowImage(action.filePath))
             }
+
+            is ChatDetailsAction.ShowVideo -> {
+                emitEffect(ChatDetailsEffect.ShowVideo(action.filePath))
+            }
         }
     }
 

@@ -39,6 +39,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
@@ -48,7 +49,9 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.ImageLoader
 import coil.compose.AsyncImage
+import coil.decode.VideoFrameDecoder
 import com.kogen.giraffe.R
 import com.kogen.giraffe.ui.common.domain.models.GiraffeChat
 import com.kogen.giraffe.ui.common.domain.models.GiraffeChatStatus
@@ -62,6 +65,7 @@ import com.kogen.giraffe.ui.common.presentation.AudioPlaybackState
 import com.kogen.giraffe.ui.common.presentation.NoContentView
 import com.kogen.giraffe.ui.common.presentation.extensions.copyToClipboard
 import com.kogen.giraffe.ui.common.presentation.extensions.decodeImageAspectRatio
+import com.kogen.giraffe.ui.common.presentation.extensions.decodeVideoAspectRatio
 import com.kogen.giraffe.ui.common.presentation.extensions.msToDurationText
 import com.kogen.giraffe.ui.common.presentation.extensions.shareFile
 import com.kogen.giraffe.ui.common.presentation.extensions.timestampToDateTime
@@ -328,6 +332,17 @@ private fun ServerMessageView(
                         )
                     }
 
+                    GiraffeContentType.Video -> {
+                        Spacer(Modifier.height(8.dp))
+                        VideoThumbnailView(
+                            filePath = message.filePath,
+                            context = context,
+                            onClick = {
+                                action(ChatDetailsAction.ShowVideo(message.filePath))
+                            },
+                        )
+                    }
+
                     GiraffeContentType.Unknown -> {
                         Spacer(Modifier.height(4.dp))
                         UnknownFileView(
@@ -436,6 +451,17 @@ private fun ClientMessageView(
                             filePath = message.filePath,
                             playback = audioPlayback,
                             action = action,
+                        )
+                    }
+
+                    GiraffeContentType.Video -> {
+                        Spacer(Modifier.height(8.dp))
+                        VideoThumbnailView(
+                            filePath = message.filePath,
+                            context = context,
+                            onClick = {
+                                action(ChatDetailsAction.ShowVideo(message.filePath))
+                            },
                         )
                     }
 
@@ -626,5 +652,63 @@ private fun UnknownFileView(
             contentDescription = "Share",
             tint = PrimaryColor,
         )
+    }
+}
+
+/**
+ * Thumbnail bubble for a video message: a decoded first frame with a play badge over it, tapping
+ * anywhere opens the full-screen, auto-playing [com.kogen.giraffe.ui.features.videoPreview.presentation.screens.VideoPreviewScreen]
+ * rather than trying to play video inline the way voice messages do.
+ */
+@SuppressLint("UnusedBoxWithConstraintsScope")
+@Composable
+private fun VideoThumbnailView(
+    filePath: String,
+    context: Context,
+    onClick: () -> Unit,
+) {
+    val aspectRatio = remember(filePath) { decodeVideoAspectRatio(filePath) }
+    // Coil doesn't decode video frames out of the box; this loader is scoped to this bubble
+    // (rather than the whole screen) to keep the change local - LazyColumn only keeps a handful
+    // of these composed at once, so the duplication is bounded.
+    val videoImageLoader = remember(context) {
+        ImageLoader.Builder(context)
+            .components { add(VideoFrameDecoder.Factory()) }
+            .build()
+    }
+
+    BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+        val targetHeight = (maxWidth / (aspectRatio ?: 0f)).coerceIn(120.dp, 260.dp)
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(targetHeight)
+                .clip(RoundedCornerShape(14.dp))
+                .clickable(onClick = onClick),
+        ) {
+            AsyncImage(
+                modifier = Modifier.fillMaxSize(),
+                model = File(filePath),
+                imageLoader = videoImageLoader,
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+            )
+            Box(
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .size(44.dp)
+                    .clip(CircleShape)
+                    .background(Color.Black.copy(alpha = 0.45f)),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    modifier = Modifier.size(22.dp),
+                    painter = painterResource(R.drawable.ic_play),
+                    contentDescription = null,
+                    tint = Color.White,
+                )
+            }
+        }
     }
 }

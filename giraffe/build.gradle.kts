@@ -90,7 +90,10 @@ dependencies {
     debugImplementation(libs.compose.ui.tooling)
     implementation(libs.coil.base)
     implementation(libs.coil)
+    implementation(libs.coil.video)
     implementation(libs.zoomable)
+    implementation(libs.media3.exoplayer)
+    implementation(libs.media3.ui)
 
     testImplementation(libs.junit)
     testImplementation(libs.mockk)
