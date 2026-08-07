@@ -69,6 +69,8 @@ dependencies {
     implementation(libs.lifecycle.viewmodel)
     implementation(libs.lifecycle.viewmodel.compose)
     debugImplementation(libs.compose.ui.tooling)
+
+    testImplementation(libs.junit)
 }
 
 ksp {

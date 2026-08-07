@@ -73,6 +73,8 @@ dependencies {
     debugImplementation(libs.compose.ui.tooling)
     implementation(libs.coil.base)
     implementation(libs.coil)
+
+    testImplementation(libs.junit)
 }
 
 ksp {
