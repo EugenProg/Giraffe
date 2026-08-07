@@ -57,6 +57,7 @@ import com.kogen.giraffe.ui.common.domain.models.GiraffeChat
 import com.kogen.giraffe.ui.common.domain.models.GiraffeChatStatus
 import com.kogen.giraffe.ui.common.domain.models.GiraffeContentType
 import com.kogen.giraffe.ui.common.domain.models.GiraffeMessage
+import com.kogen.giraffe.ui.common.domain.models.toClipboardText
 import com.kogen.giraffe.ui.common.main.BGSecondaryColor
 import com.kogen.giraffe.ui.common.main.BackgroundColor
 import com.kogen.giraffe.ui.common.main.PrimaryColor
@@ -84,6 +85,7 @@ internal fun ChatDetailsScreen(
     state: ChatDetailsState,
     action: (ChatDetailsAction) -> Unit
 ) {
+    val context = LocalContext.current
     Scaffold(
         containerColor = BackgroundColor,
         topBar = {
@@ -125,6 +127,19 @@ internal fun ChatDetailsScreen(
                             color = TextPrimaryColor,
                             maxLines = 2,
                             overflow = TextOverflow.Ellipsis,
+                        )
+                        Icon(
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(RoundedCornerShape(6.dp))
+                                .clickable {
+                                    state.chat?.toClipboardText()
+                                        ?.copyToClipboard(context, title = "Request")
+                                }
+                                .padding(8.dp),
+                            painter = painterResource(R.drawable.ic_copy),
+                            contentDescription = "Copy whole request",
+                            tint = PrimaryColor,
                         )
                     }
                     Box(
@@ -298,7 +313,7 @@ private fun ServerMessageView(
                 color = TextPrimaryColor,
             )
             if (message.filePath.isNullOrBlank().not()) {
-                when(message.contentType) {
+                when (message.contentType) {
                     GiraffeContentType.Image -> {
                         Spacer(Modifier.height(8.dp))
 
@@ -306,7 +321,8 @@ private fun ServerMessageView(
                             decodeImageAspectRatio(message.filePath)
                         }
                         BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
-                            val targetHeight = (maxWidth / (aspectRatio ?: 0f)).coerceIn(120.dp, 260.dp)
+                            val targetHeight =
+                                (maxWidth / (aspectRatio ?: 0f)).coerceIn(120.dp, 260.dp)
 
                             AsyncImage(
                                 modifier = Modifier
@@ -420,7 +436,7 @@ private fun ClientMessageView(
                 color = TextPrimaryColor,
             )
             if (message.filePath.isNullOrBlank().not()) {
-                when(message.contentType) {
+                when (message.contentType) {
                     GiraffeContentType.Image -> {
                         Spacer(Modifier.height(8.dp))
 
@@ -428,7 +444,8 @@ private fun ClientMessageView(
                             decodeImageAspectRatio(message.filePath)
                         }
                         BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
-                            val targetHeight = (maxWidth / (aspectRatio ?: 0f)).coerceIn(120.dp, 260.dp)
+                            val targetHeight =
+                                (maxWidth / (aspectRatio ?: 0f)).coerceIn(120.dp, 260.dp)
 
                             AsyncImage(
                                 modifier = Modifier
@@ -576,7 +593,8 @@ private fun VoiceMessageView(
                                     detectDragGestures(
                                         onDrag = { change, _ ->
                                             change.consume()
-                                            val fraction = (change.position.x / size.width).coerceIn(0f, 1f)
+                                            val fraction =
+                                                (change.position.x / size.width).coerceIn(0f, 1f)
                                             action(ChatDetailsAction.SeekAudio((fraction * durationMs).toInt()))
                                         }
                                     )

@@ -93,7 +93,8 @@
       "Bash(./gradlew :giraffe:compileDebugKotlin :giraffe:compileDebugUnitTestKotlin --console=plain)",
       "Bash(git log *)",
       "Bash(./gradlew :giraffe:testDebugUnitTest :giraffe:assembleDebug :app:assembleDebug --console=plain)",
-      "Bash(javap -p 'coil.decode.VideoFrameDecoder$Factory')"
+      "Bash(javap -p 'coil.decode.VideoFrameDecoder$Factory')",
+      "Bash(./gradlew :giraffe:assembleDebug :app:assembleDebug --console=plain)"
     ]
   }
 }
