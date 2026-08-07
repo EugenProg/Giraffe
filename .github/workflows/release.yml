@@ -45,6 +45,9 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
 
+      - name: Run tests
+        run: ./gradlew :giraffe:testDebugUnitTest :app:testDebugUnitTest
+
       - name: Build and create artifacts
         run: ./gradlew :giraffe:publish -Pversion=${{ steps.get_version.outputs.TAG_VERSION }}
 
