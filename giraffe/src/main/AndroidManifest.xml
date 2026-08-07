@@ -13,5 +13,20 @@
             android:launchMode="singleTask"
             android:taskAffinity="com.kogen.giraffe.task"
             android:theme="@style/Theme.AppCompat.NoActionBar" />
+
+        <!--
+        Authority is namespaced with ${applicationId} so it can't collide with a FileProvider
+        the host app declares for itself - Giraffe is embedded into arbitrary host apps, and two
+        providers sharing one authority would fail the manifest merge.
+        -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.giraffeprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/giraffe_file_paths" />
+        </provider>
     </application>
 </manifest>

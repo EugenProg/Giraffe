@@ -306,7 +306,10 @@ private fun ServerMessageView(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .height(targetHeight)
-                                    .clip(RoundedCornerShape(14.dp)),
+                                    .clip(RoundedCornerShape(14.dp))
+                                    .clickable {
+                                        action(ChatDetailsAction.ShowImage(message.filePath))
+                                    },
                                 model = File(message.filePath),
                                 contentDescription = null,
                                 contentScale = ContentScale.Crop,
@@ -405,7 +408,10 @@ private fun ClientMessageView(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .height(targetHeight)
-                                    .clip(RoundedCornerShape(14.dp)),
+                                    .clip(RoundedCornerShape(14.dp))
+                                    .clickable {
+                                        action(ChatDetailsAction.ShowImage(message.filePath))
+                                    },
                                 model = File(message.filePath),
                                 contentDescription = null,
                                 contentScale = ContentScale.Crop,
